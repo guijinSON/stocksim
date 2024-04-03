@@ -65,7 +65,7 @@ def streamlit_init():
                     st.markdown(message)
 
                 with st.chat_message("ai"):
-                    save_message(sample_conversation_chain().invoke(message), "ai")
+                    save_message(sample_conversation_chain(callbacks=[OpenAIChatMessageCallbackHandler()]).invoke(message), "ai")
 
     with col2:
         with st.container(height=300):

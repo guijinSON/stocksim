@@ -54,7 +54,7 @@ def _random_key_set(model_version: str) -> Dict[str, str] | None:
         return None
 
 
-def _get_azure_open_ai(api_data: dict, temperature: float, is_stream: bool) -> AzureChatOpenAI:
+def _get_azure_open_ai(api_data: dict, temperature: float, is_stream: bool, callbacks: List[BaseCallbackHandler] = [],) -> AzureChatOpenAI:
     return AzureChatOpenAI(
         openai_api_version="2024-02-01",
         azure_deployment=api_data.get("deployment"),
@@ -62,18 +62,20 @@ def _get_azure_open_ai(api_data: dict, temperature: float, is_stream: bool) -> A
         api_key=api_data.get("api_key"),
         temperature=temperature,
         streaming=is_stream,
+        callbacks=callbacks,
     )
 
 
 def get_azure_gpt_chat_llm(model_version: str = "35", temperature: float = 0.2,
                            is_stream: bool = True, callbacks: List[BaseCallbackHandler] = [], ) -> AzureChatOpenAI:
-    is_ready = False
-    llm = None
-    while (is_ready == False):
-        rand_api_data = _random_key_set(model_version)
-        llm = _get_azure_open_ai(rand_api_data, temperature, is_stream, callbacks)
-        response = llm.invoke("health-check")
-        if response.content:
-            is_ready = True
+    # is_ready = False
+    rand_api_data = _random_key_set(model_version)
+    llm = _get_azure_open_ai(rand_api_data, temperature, is_stream, callbacks)
+    # while (is_ready == False):
+    #     rand_api_data = _random_key_set(model_version)
+    #     llm = _get_azure_open_ai(rand_api_data, temperature, is_stream, callbacks)
+    #     response = llm.invoke("health-check")
+    #     if response.content:
+    #         is_ready = True
 
     return llm

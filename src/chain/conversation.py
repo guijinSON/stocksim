@@ -12,6 +12,6 @@ from src.prompt.load_prompt import load_prompt
 def sample_conversation_chain(callbacks: List[BaseCallbackHandler] = [],):
     prompt = load_prompt("base_chat")
     llm = get_azure_gpt_chat_llm(model_version="35", callbacks=callbacks)
-    return {"inputs": RunnablePassthrough()} | prompt | llm | StrOutputParser()
+    return {"inputs": RunnablePassthrough()} | prompt | llm
 
 
