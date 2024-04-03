@@ -7,11 +7,79 @@ from langchain_core.prompts import PromptTemplate
 
 from src.llm.azure import get_azure_gpt_chat_llm
 
-market_event_category = ["경영", "자본금", "이익", "기술", "시장 컨센서스"]
-event_data = json.loads("market_event.json")
-
 
 def random_market_event_chain():
+    prompt = PromptTemplate.from_template(template="""
+# Persona
+You need to choose a stock market event that is specifically relevant to the stock.
+Subject to the following conditions, you must unconditionally follow instructions
+
+## Condition
+1) First, choose a category from the five below.
+    - 정치	
+    - 기업	
+    - 경제	
+    - 기술	
+    - 자연재해	
+    - 사회	
+    - 국제
+2) Then, choose an event from the category you selected.
+{
+  "정치": [
+    "전쟁 발생",
+    "대통령 당선",
+    "대통령 서거",
+    "국채 발행",
+    "국제 금융 기관 차입",
+    "세율 인상"
+  ],
+  "기업": [
+    "주가 조작",
+    "부도",
+    "합병"
+  ],
+  "경제": [
+    "실업률 증가",
+    "GDP 성장률 둔화",
+    "소비자 물가 지수 상승",
+    "금융 기관 파산",
+    "은행 부도",
+    "중앙 은행 이자율 증가",
+    "중앙 은행 금리 인상",
+    "인구 감소"
+  ],
+  "기술": [
+    "전쟁 무기 개발"
+  ],
+  "자연재해": [
+    "지진",
+    "홍수",
+    "태풍",
+    "감염병"
+  ],
+  "사회":[
+    "대규모 시위",
+    "테러"
+  ],
+  "국제": [
+    "관세 부과",
+    "무역 협상 결렬",
+    "국제 무역 제약",
+    "국가 협약 체결",
+    "정상회담 개최",
+    "연준 금리 결정"
+  ]
+}
+
+3) **The answer must be formatted as JSON, with a key of category and only one events.**
+
+## Your Choices is: """)
+    llm = get_azure_gpt_chat_llm(model_version="35", temperature=0.0, is_stream=False)
+    chain = prompt | llm
+    return chain
+
+
+def random_stock_event_chain():
     prompt = PromptTemplate.from_template(template="""
 # Persona
 You need to choose a stock market event that is specifically relevant to the market.
@@ -97,7 +165,16 @@ Subject to the following conditions, you must unconditionally follow instruction
 
 
 def random_market_event():
+    market_event_category = ["정치", "기업", "경제", "기술", "자연재해", "사회", "국제"]
+    event_data = json.loads("market_event.json")
     category = random.choice(market_event_category)
+    return random.choice(event_data[category])
+
+
+def random_stock_event():
+    stock_event_category = ["경영", "자본금", "이익", "기술", "시장 컨센서스"]
+    event_data = json.loads("stock_event.json")
+    category = random.choice(stock_event_category)
     return random.choice(event_data[category])
 
 
