@@ -15,7 +15,7 @@ col1, col2 = st.columns([0.65,0.35])
 with col1:
     with st.container(height=600):
         # Initialize chat history
-        client = OpenAI(api_key="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")
+        client = OpenAI(api_key="OPENAI-KEY")
         
         if "openai_model" not in st.session_state:
             st.session_state["openai_model"] = "gpt-3.5-turbo"
