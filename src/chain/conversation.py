@@ -164,7 +164,7 @@ You must return in dictionary format exactly like the one you recieved.
 {new_plot}
 
 ### Elapsed Time:
-{time}
+{elapsed_time}
 
 ### Original Price:
 {price}
@@ -174,7 +174,7 @@ You must return in dictionary format exactly like the one you recieved.
     llm = get_azure_gpt_chat_llm(model_version="4", is_stream=True)
     chain = {"background": RunnablePassthrough(), "new_plot": RunnablePassthrough(),
              "elapsed_time": RunnablePassthrough(), "price": RunnablePassthrough()} | prompt | llm
-    response = chain.invoke({"background": background, "new_plot": new_plot, "time": elapsed_time, "price": price})
+    response = chain.invoke({"background": background, "new_plot": new_plot, "elapsed_time": elapsed_time, "price": price})
 
     return eval(response.context)
 
