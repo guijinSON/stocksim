@@ -70,6 +70,7 @@ def get_azure_gpt_chat_llm(model_version: str = "35", temperature: float = 0.2,
                            is_stream: bool = True, callbacks: List[BaseCallbackHandler] = [], ) -> AzureChatOpenAI:
     # is_ready = False
     rand_api_data = _random_key_set(model_version)
+    print(rand_api_data)
     llm = _get_azure_open_ai(rand_api_data, temperature, is_stream, callbacks)
     # while (is_ready == False):
     #     rand_api_data = _random_key_set(model_version)

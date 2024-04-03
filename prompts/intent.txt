@@ -42,12 +42,17 @@ Answer: {
 }
 
 4.
-Question: 인간의 종말이 온다면, 그것은 나에게 어떤 영향을 줄것인가?
+Question: 인간의 종말이 온다면, 그것은 나에게 어떤 영향을 줄 것인가?
 Answer: {
    "Intent" : I'm not sure about this.
    "Keywords" : [None]
 }
 
 
-###
-Your JSON Object ANSWER:
+### Input
+{inputs}
+
+
+Your JSON Object Answer is...
+
+
