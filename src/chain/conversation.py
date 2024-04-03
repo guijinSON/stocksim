@@ -5,6 +5,7 @@ from langchain_core.callbacks import BaseCallbackHandler
 from langchain_core.runnables import RunnablePassthrough
 
 from src.llm.azure import get_azure_gpt_chat_llm
+from src.parser.custom_output import custom_parser
 from src.prompt.load_prompt import load_prompt
 from langchain_core.prompts import FewShotPromptTemplate, PromptTemplate, ChatPromptTemplate
 
@@ -88,12 +89,12 @@ Your Answer:
         },
     ]
     llm = get_azure_gpt_chat_llm(model_version="4", is_stream=True)
-    chain = {"inputs": RunnablePassthrough(), "examples": RunnablePassthrough()} | prompt | llm
+    chain = {"inputs": RunnablePassthrough(), "examples": RunnablePassthrough()} | prompt | llm | custom_parser
     response = chain.invoke({"inputs": inputs, "examples": examples})
 
     return response
 
 
-# if __name__ == "__main__":
-#     print(search_stock_verified("삼성전자 주가가 어떻게 되나요?"))
-#     print(search_stock_verified("어디로 가야하오?"))
+if __name__ == "__main__":
+    print(search_stock_verified("삼성전자 주가가 어떻게 되나요?"))
+    print(search_stock_verified("어디로 가야하오?"))
