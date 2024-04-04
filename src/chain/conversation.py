@@ -176,7 +176,7 @@ You must return in dictionary format exactly like the one you recieved.
              "elapsed_time": RunnablePassthrough(), "price": RunnablePassthrough()} | prompt | llm
     response = chain.invoke({"background": background, "new_plot": new_plot, "elapsed_time": elapsed_time, "price": price})
 
-    return eval(response.context)
+    return response.content
 
 
 if __name__ == "__main__":
