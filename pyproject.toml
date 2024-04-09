@@ -4,10 +4,11 @@ version = "0.1.0"
 description = ""
 authors = ["oneline-hyunjun-jeon <hyunjun.jeon@onelineai.com>"]
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"
-streamlit = "^1.32.2"
+streamlit = "^1.33.0"
 langchain = "^0.1.14"
 langchain-openai = "^0.1.1"
 python-dotenv = "^1.0.1"
