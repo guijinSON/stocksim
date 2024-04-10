@@ -1,5 +1,6 @@
 from typing import Type
 
+from langchain_core.messages import AIMessage
 from langchain_core.output_parsers import (
     CommaSeparatedListOutputParser,
     NumberedListOutputParser,
@@ -57,8 +58,11 @@ def get_output_parser_response_pydantic_obj(
 
 
 def get_output_parser_response_custom_string(
+    ai_message: AIMessage,
     prefix_text: str = "",
     suffix_text: str = "",
 ):
-    # TODO - 미완성 - 대답 앞, 뒤에 사용자가 지정한 문장을 넣을 수 있어야함
-    return prefix_text + BaseOutputParser().parse() + suffix_text
+    """
+    AI Message 의 앞, 뒤에 원하는 문장을 집어넣는 Parser 입니다.
+    """
+    return prefix_text + ai_message.content.swapcase() + suffix_text

@@ -1,5 +1,9 @@
 from typing import List, Mapping
 
+from langchain.chains.llm_checker.base import LLMCheckerChain
+from langchain.chains.llm_math.base import LLMMathChain
+from langchain_core.language_models import BaseChatModel
+
 from langchain.chains.base import Chain
 from langchain.chains.conversation.base import ConversationChain
 from langchain.chains.llm import LLMChain
@@ -17,7 +21,7 @@ from langchain_core.prompts import BasePromptTemplate
 
 
 def get_llm_chain(
-    model,
+    model: BaseChatModel,
     prompt,
     llm_kwargs: dict,
     output_key: str = "text",
@@ -65,14 +69,16 @@ def get_request_url_based_chain(
 
 def get_conversation_chain(
     memory: BaseMemory,
+    llm: BaseChatModel,
     prompt: BasePromptTemplate,
     input_key: str = "input",
     output_key: str = "response",
     verbose: bool = True,
 ):
     """
-
+    기본적인 대화를 진행하는 체인입니다.
     :param memory:
+    :param llm:
     :param prompt:
     :param input_key:
     :param output_key:
@@ -81,6 +87,7 @@ def get_conversation_chain(
     """
     return ConversationChain(
         memory=memory,
+        llm=llm,
         prompt=prompt,
         input_key=input_key,
         output_key=output_key,
@@ -131,3 +138,18 @@ def get_multi_router_chain(
 
 def get_create_sql_query_chain():
     return create_sql_query_chain()
+
+
+def get_llm_math_chain():
+    """
+    수학식 계산을 위해 Python 코드를 구성하는 체인
+    python - tool 과 결합하면 해당 코드를 실제 실행한 결과를 받을 수 있음
+    """
+    return LLMMathChain()
+
+
+def get_llm_checker_chain():
+    """
+    지정한 대로 체크를 수행하는 체인(결과 검증을 수행할 수 있음)
+    """
+    return LLMCheckerChain()
