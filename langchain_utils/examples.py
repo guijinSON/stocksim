@@ -1,5 +1,12 @@
+import random
+import sys
+
 from langchain.agents import load_tools, initialize_agent, AgentType
+from langchain.tools.file_management import WriteFileTool
+from langchain.tools.retriever import create_retriever_tool
+from langchain_experimental.tools.python import tool as python_tool
 from langchain_core.prompts import PromptTemplate
+from langchain_core.tools import Tool
 
 from langchain_utils.chains import (
     get_conversation_chain,
@@ -11,6 +18,7 @@ from langchain_utils.memories import (
     get_conversation_buffer_memory,
     get_conversation_summary_memory,
 )
+from langchain_utils.retreivers import wikipedia_retriever
 from src.llm.azure import get_azure_gpt_chat_llm
 
 # Example 1: chat_history + type of chat memory + conversation_chain
@@ -81,17 +89,35 @@ sample_sequential_chain = get_sequential_chain(
 # 이 예제도 이제는 과거 방식의 예제이지만, 아직까지는 사용될 수 있습니다.
 
 # AgentType 을 이해하고 난 뒤에 사용하는 것이 중요합니다.(아니면 오작동 할 가능성이 너무 높음)
-# AgentType.CHAT_ZERO_SHOT_REACT_DESCRIPTION: 대화 형식으로 상호작용하는 특징이 있으며, Chat Models 와 ReACT 방법론을 이용해 Agent 를 구성함
-# AgentType.CHAT_CONVERSATIONAL_REACT_DESCRIPTION: 위와 같은 방식이지만, 여러 개의 예제를 줄 수 있다(Agent 가 잘 동작하지 않을 시)
-# AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION: 여러 입력을 가진 툴을 사용하는 Agent
+# AgentType.CHAT_ZERO_SHOT_REACT_DESCRIPTION : 대화 형식으로 상호작용하는 특징이 있으며, Chat Models 와 ReACT 방법론을 이용해 Agent 를 구성함
+# AgentType.CHAT_CONVERSATIONAL_REACT_DESCRIPTION : 위와 같은 방식이지만, 여러 개의 예제를 줄 수 있다(Agent 가 잘 동작하지 않을 시)
+# AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION : 여러 입력을 가진 툴을 사용하는 Agent
+# AgentType.OPENAI_FUNCTIONS : OpenAI Function Calling 기능 중 단일 입력을 가진 툴만 사용 (AgentType.CHAT_ZERO_SHOT_REACT_DESCRIPTION 와 기능 같음)
+# AgentType.OPENAI_MULTI_FUNCTIONS : OpenAI Function Calling 기능 중 다중 입력을 가진 툴 사용 (AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION 와 기능 같음)
 
 
+# 단순히 기본 제공되는 tools 들을 사용하기
 sample_1_tools = load_tools(["requests"])  # requests: Langchain 에 미리 준비된 툴임
+
+# 여러가지 Langchain 제공 기본 tool(langchain.tools) 소개 - 공식 문서를 참고하면 더 많습니다.
+sample_tools = [
+    "requests_get",
+    "seriapi",
+    "python_repl_ast",  # Python 코드를 실행하게 해주는 tool
+]
+sample_tools.append(
+    WriteFileTool(
+        root_dir="./",
+    )
+)
+sample_tools.append(python_tool)
 
 sample_1_agent = initialize_agent(
     tools=sample_1_tools,
     llm=llm,
     agent=AgentType.CHAT_ZERO_SHOT_REACT_DESCRIPTION,  # ReACT 방식으로 동작하는 에이전트
+    memory=memory,  # 메모리도 Agent 에 넣어서, 대화 Content 를 기억하는 Agent 로 동작 가능
+    max_iterations=3,  # 최대 반복횟수 제한
     verbose=True,
 )
 sample_1_url = ""
@@ -101,3 +127,19 @@ sample_1_url = ""
 #         f"""아래 URL 에 접속해서 내용을 요약해주세요. \n {sample_1_url}"""
 #     )
 # )
+
+# Custom Agent 제작하기
+my_custom_tool = Tool(
+    name="random_number",  # 툴을 식별하기 위한 이름
+    description="특정 최소값 이상의 임의의 정수를 생성할 수 있습니다.",  # 해당 툴에 대한 설명(LLM 이 이걸 이해하고 실행할 수 있게)
+    func=lambda x: random.randint(
+        int(x),
+        sys.maxsize,
+    ),  # Custom 툴 호출 시 실행될 함수 정의 (따로 이름을 가진 함수로 만들어 놓는걸 추천, 예제와 같은 람다형식 말고)
+)
+
+my_custom_tool_2 = create_retriever_tool(
+    name="wikipedia_retriever",
+    description="입력 받은 단어에 대해 위키백화를 검색할 수 있다.",
+    retriever=wikipedia_retriever,
+)
