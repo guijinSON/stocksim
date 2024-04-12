@@ -3,8 +3,13 @@ import streamlit as st
 
 from langchain_core.callbacks import BaseCallbackHandler
 
-from src.chain.conversation import sample_conversation_chain, search_stock, search_stock_verified, update_story, \
-    update_background, update_stock_price
+from src.chain.biz_logic import (
+    search_stock,
+    search_stock_verified,
+    update_story,
+    update_background,
+    update_stock_price,
+)
 
 
 class OpenAIChatMessageCallbackHandler(BaseCallbackHandler):
@@ -44,7 +49,9 @@ def streamlit_init():
 
     if "messages" not in st.session_state:
         st.session_state["messages"] = []
-        st.session_state["background"] = """
+        st.session_state[
+            "background"
+        ] = """
 삼성전자 (005930.KS) - 삼성전자는 프로메테우스 프로젝트의 개발을 주도하며, 자사의 고성능 GPU와 NPU를 통해 AI 분야에서 기술력을 입증했습니다. 2030년 현재, 삼성전자는 프로메테우스를 스마트폰, 스마트 TV 등 소비자 가전 제품에 탑재해 차별화된 사용자 경험을 제공하고 있습니다. 또한, 산업용 AI 솔루션 개발에도 나서며 스마트 팩토리와 스마트 시티 분야에서 혁신을 주도하고 있습니다.
 
 SK하이닉스 (000660.KS) - SK하이닉스는 AI 옵티마이저 프로젝트를 통해 독자적인 AGI 기술 개발에 집중하며, 메모리 반도체 설계와 AI 알고리즘을 결합하여 생산 효율성을 높이고 범용 AGI 기술 발전에 기여하고 있습니다. 현재는 프로메테우스의 발전을 지켜보며 상호 협력 가능성을 모색하고 있으며, AI 옵티마이저를 프로메테우스 수준으로 고도화하는 도전에는 시간과 노력이 필요할 것으로 예상됩니다.
@@ -62,7 +69,7 @@ SK하이닉스 (000660.KS) - SK하이닉스는 AI 옵티마이저 프로젝트�
         # st.session_state["portfolio"] = []  # 유저 포트폴리오
         st.session_state["actions"] = []  # 유저 액션
         st.session_state["time"] = 0  # 시간
-        st.session_state["user_input_time"] = "" # 유저 입력 시간
+        st.session_state["user_input_time"] = ""  # 유저 입력 시간
         st.session_state["stock_info"] = 0  # 유저 포트폴리오 정보
         st.session_state["stock_info_df"] = 0  # 유저 포트폴리오 정보
 
@@ -81,8 +88,7 @@ SK하이닉스 (000660.KS) - SK하이닉스는 AI 옵티마이저 프로젝트�
 5. 2~4단계를 게임 내 시간으로 10년이 될 때까지 반복하세요.
 6. 10년 동안 여러분의 포트폴리오 가치를 최대한 높이는 것이 목표입니다. 현명한 투자 결정과 리스크 관리가 성공의 열쇠가 될 것입니다.
 
-그럼 이제 게임을 시작하겠습니다. 검색하고 싶은 주식을 설명해주세요. 매턴 주식 조사는 한번만 가능하니 신중하게 해야합니다. (ex. PROMETHEUS 의 경쟁사를 개발 중인 회사는 뭐가 있어?, PROMETHEUS 개발 참여 기업, 등)"""
-                    ,
+그럼 이제 게임을 시작하겠습니다. 검색하고 싶은 주식을 설명해주세요. 매턴 주식 조사는 한번만 가능하니 신중하게 해야합니다. (ex. PROMETHEUS 의 경쟁사를 개발 중인 회사는 뭐가 있어?, PROMETHEUS 개발 참여 기업, 등)""",
                     "ai",
                 )
 
@@ -93,9 +99,11 @@ SK하이닉스 (000660.KS) - SK하이닉스는 AI 옵티마이저 프로젝트�
                 print(message)
                 # edit_df = st.data_editor(df)
 
-                st.session_state['stock_info'] = st.session_state["stock_info_df"].to_dict('records')
-                ratio_sum = st.session_state["stock_info_df"]['ratio'].sum()
-                print(st.session_state['stock_info'], ratio_sum)
+                st.session_state["stock_info"] = st.session_state[
+                    "stock_info_df"
+                ].to_dict("records")
+                ratio_sum = st.session_state["stock_info_df"]["ratio"].sum()
+                print(st.session_state["stock_info"], ratio_sum)
 
                 with st.chat_message("human"):
                     st.markdown(message)
@@ -104,16 +112,23 @@ SK하이닉스 (000660.KS) - SK하이닉스는 AI 옵티마이저 프로젝트�
                     return_value = search_stock_verified(message)
 
                     if message == "확인했습니다":
-                        new_plot = update_story(time=st.session_state["user_input_time"], background=st.session_state["background"],
-                                         callbacks=[OpenAIChatMessageCallbackHandler()])
+                        new_plot = update_story(
+                            time=st.session_state["user_input_time"],
+                            background=st.session_state["background"],
+                            callbacks=[OpenAIChatMessageCallbackHandler()],
+                        )
                         save_message(new_plot, "ai")
                         print("변경된 new_plot", new_plot)
-                        new_background = update_background(background=st.session_state["background"], new_plot=new_plot)
+                        new_background = update_background(
+                            background=st.session_state["background"], new_plot=new_plot
+                        )
                         new_stock_price = update_stock_price(
                             background=st.session_state["background"],
                             new_plot=new_plot,
                             elapsed_time=st.session_state["user_input_time"],
-                            price= st.session_state["stock_info_df"][['command','price']].to_dict()
+                            price=st.session_state["stock_info_df"][
+                                ["command", "price"]
+                            ].to_dict(),
                         )
                         st.session_state["background"] = new_background
                         print("변경된 background", new_background)
@@ -121,10 +136,15 @@ SK하이닉스 (000660.KS) - SK하이닉스는 AI 옵티마이저 프로젝트�
 
                     else:
                         print("search_stock_verified 결과:", return_value)
-                        if return_value.content == '[YES]':
+                        if return_value.content == "[YES]":
                             print("들어왔나요?")
                             save_message(
-                                search_stock(inputs=message, background=st.session_state["background"], callbacks=[OpenAIChatMessageCallbackHandler()]), "ai"
+                                search_stock(
+                                    inputs=message,
+                                    background=st.session_state["background"],
+                                    callbacks=[OpenAIChatMessageCallbackHandler()],
+                                ),
+                                "ai",
                             )
 
                     # if ratio_sum != 100:
@@ -132,7 +152,7 @@ SK하이닉스 (000660.KS) - SK하이닉스는 AI 옵티마이저 프로젝트�
 
     with col2:
         with st.container(height=300):
-            st.title('Possible Actions')
+            st.title("Possible Actions")
             option = st.selectbox(
                 "Skip Time",
                 ("1Month", "6Month", "1Year", "3Years"),
@@ -157,6 +177,7 @@ SK하이닉스 (000660.KS) - SK하이닉스는 AI 옵티마이저 프로젝트�
     # print(option)
     # dict_output = df.to_dict('records')
     # print(dict_output)
+
 
 if __name__ == "__main__":
     st.set_page_config(

@@ -1,0 +1,16 @@
+{
+  "name": "search_stock_verified",
+  "input_variables": [
+    "inputs",
+    "examples"
+  ],
+  "input_types": {},
+  "output_parser": null,
+  "partial_variables": {},
+  "metadata": null,
+  "tags": null,
+  "template": "\n# Persona\nYou're the best linguistic analyst.\nYou will be given a question verify whether the question requires you to list stocks that fits a certain criteria.\n\n\n## Environment\nMostly, users will ask questions in Korean, and they will ask questions related to stocks or the stock market and the economy.\n\n\n## Important Rules\nIf the you think the question is valid asking for a list of stocks return [YES] if not return [NO].\n\n##Examples: \n {examples} \n\n## User Question: {inputs}\n\n\nYour Answer:\n",
+  "template_format": "f-string",
+  "validate_template": false,
+  "_type": "prompt"
+}

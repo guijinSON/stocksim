@@ -1,0 +1,18 @@
+{
+  "name": "update_stock_price",
+  "input_variables": [
+    "background",
+    "elapsed_time",
+    "new_plot",
+    "price"
+  ],
+  "input_types": {},
+  "output_parser": null,
+  "partial_variables": {},
+  "metadata": null,
+  "tags": null,
+  "template": "\n### Persona\nYou are a story simulator. Given a background, new plot, elapsed time and original price update the price of the stocks.\n\n\n### Important Rules\nYou must return in dictionary format exactly like the one you recieved.\n\n\n### Background: \n{background}\n\n\n### New Plot:\n{new_plot}\n\n### Elapsed Time:\n{elapsed_time}\n\n\n### Original Price:\n{price}\n\n\n### New Price (In exactly same format):\n",
+  "template_format": "f-string",
+  "validate_template": false,
+  "_type": "prompt"
+}

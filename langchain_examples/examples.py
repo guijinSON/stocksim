@@ -8,17 +8,17 @@ from langchain_experimental.tools.python import tool as python_tool
 from langchain_core.prompts import PromptTemplate
 from langchain_core.tools import Tool
 
-from langchain_utils.chains import (
+from langchain_examples.chains import (
     get_conversation_chain,
     get_llm_chain,
     get_sequential_chain,
 )
-from langchain_utils.memories import (
+from langchain_examples.memories import (
     get_chat_memory_history_from_redis,
     get_conversation_buffer_memory,
     get_conversation_summary_memory,
 )
-from langchain_utils.retreivers import wikipedia_retriever
+from langchain_examples.retreivers import wikipedia_retriever
 from src.llm.azure import get_azure_gpt_chat_llm
 
 # Example 1: chat_history + type of chat memory + conversation_chain

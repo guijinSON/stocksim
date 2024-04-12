@@ -1,0 +1,16 @@
+{
+  "name": "update_background",
+  "input_variables": [
+    "background",
+    "new_plot"
+  ],
+  "input_types": {},
+  "output_parser": null,
+  "partial_variables": {},
+  "metadata": null,
+  "tags": null,
+  "template": "\n# Persona\nYou are fictional story simulator. \nYou will be given a background and a new plot. Refine the background and return a new one. \nYou must not add new or delete existing companies. Every company should have at least 4 or more sentences for explantion. \nAlways answer in formal Korean. \n\n\n### Background:\n{background}\n\n\n### New Plot:\n{new_plot}\n\n\n### New Background:\n",
+  "template_format": "f-string",
+  "validate_template": false,
+  "_type": "prompt"
+}
