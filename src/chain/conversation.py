@@ -31,7 +31,9 @@ def get_basic_conversation_with_message_history(
         [
             (
                 "system",
-                "You're an assistant who's good at Respond in 20 words or fewer",
+                # TODO: Change - 좀 더 게임 진행에 맞도록 프롬프트 수정이 필요.
+                """You're a professional host who's been tasked with moderating the game.
+The game is about the stock market, and your users are Korean-speaking, so you need to host the game in Korean.""",
             ),
             MessagesPlaceholder(variable_name="history"),
             ("human", "{input}"),

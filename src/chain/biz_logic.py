@@ -1,20 +1,19 @@
 # 사용자와의 대화를 나누는 Chain
-import os
-from pathlib import Path
 from typing import List
 
 from langchain_core.callbacks import BaseCallbackHandler
+from langchain_core.prompts import load_prompt
 from langchain_core.runnables import RunnablePassthrough
 
+from src.config.settings import PROMPT_DIR
 from src.llm.azure import get_azure_gpt_chat_llm
 from src.parser.custom_output import custom_parser
-from src.prompt.load_prompt import load_prompt
 
 
 def search_stock(
     inputs: str, background: str, callbacks: List[BaseCallbackHandler] = []
 ):
-    prompt = load_prompt("search_stock.json")
+    prompt = load_prompt(PROMPT_DIR + "/search_stock.json")
     llm = get_azure_gpt_chat_llm(model_version="4", is_stream=True, callbacks=callbacks)
     chain = (
         {"inputs": RunnablePassthrough(), "background": RunnablePassthrough()}
@@ -30,7 +29,7 @@ def update_story(time: str, background: str, callbacks: List[BaseCallbackHandler
     """
     전체 스토리를 업데이트 하는 로직
     """
-    prompt = load_prompt("update_story.json")
+    prompt = load_prompt(PROMPT_DIR + "/update_story")
     llm = get_azure_gpt_chat_llm(model_version="4", is_stream=True, callbacks=callbacks)
     chain = (
         {"time": RunnablePassthrough(), "background": RunnablePassthrough()}
@@ -45,7 +44,7 @@ def update_background(background: str, new_plot: str):
     """
     백그라운드를 반영하는 로직
     """
-    prompt = load_prompt("update_background.json")
+    prompt = load_prompt(PROMPT_DIR + "/update_background")
     llm = get_azure_gpt_chat_llm(model_version="4", is_stream=True)
     chain = (
         {"background": RunnablePassthrough(), "new_plot": RunnablePassthrough()}
@@ -62,7 +61,7 @@ def search_stock_verified(inputs: str):
     :param inputs:
     :return:
     """
-    prompt = load_prompt("search_stock_verified.json")
+    prompt = load_prompt(PROMPT_DIR + "/search_stock_verified.json")
     examples = [
         {"question": "삼성전자 에 대해 설명해줘", "answer": "[NO]"},
         {"question": "반도체를 다루는 회사들을 소개해줘", "answer": "[YES]"},
@@ -90,7 +89,7 @@ def update_stock_price(background: str, new_plot: str, elapsed_time: str, price:
     """
     주가를 업데이트 합니다.
     """
-    prompt = load_prompt("update_stock_price.json")
+    prompt = load_prompt("update_stock_price")
     llm = get_azure_gpt_chat_llm(model_version="4", is_stream=True)
     chain = (
         {
