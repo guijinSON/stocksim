@@ -1,10 +1,10 @@
-import time
-
 import pandas as pd
 
 from src.chain.biz_logic import search_stock_verified, update_story, update_stock_price, update_background, search_stock
 import streamlit as st
 from langchain_core.callbacks import BaseCallbackHandler
+
+from src.utils.ui import get_now_time_by_user_input_time, START_SYSTEM_TIME, STOCK_NAMES, set_data_frame_by_system_price
 
 
 def get_game_story():
@@ -55,56 +55,6 @@ def get_game_initial_background():
     한글과컴퓨터 (030520.KR) - 한글과컴퓨터는 프로메테우스 AGI의 부상으로 오피스 소프트웨어 시장에서의 변화에 대응하기 위해 전략을 재조정했습니다. 기존 역량과 공공기관 및 기업 시장에서의 입지를 활용하며, 오픈 소스 커뮤니티와 협력하여 AI 기능을 플러그인으로 개발하고 '한컴구름' OS를 AGI와 연동하는 개방형 플랫폼으로 전환하고자 노력하고 있습니다.
         """
     )
-
-
-def get_step_for_step_progress(step: str):
-    ret = 0
-    if step == "STEP1":
-        ret = 1
-    elif step == "STEP2":
-        ret = 2
-    elif step == "STEP3":
-        ret = 3
-    return ret
-
-
-def get_now_time_by_user_input_time(now: int, user_input_time: str):
-    if user_input_time == "1Month":
-        now += 1
-    elif user_input_time == "6Month":
-        now += 6
-    elif user_input_time == "1Year":
-        now += 12
-    elif user_input_time == "3Years":
-        now += 36
-    return now + st.session_state["time"]
-
-
-def get_data_frame_by_system_price():
-
-    # df = pd.DataFrame(
-    #     [
-    #         {"stock": "삼성전자", "ratio": 5, "price": 300000},
-    #         {"stock": "네이버", "ratio": 5, "price": 700000},
-    #         {"stock": "카카오", "ratio": 3, "price": 300000},
-    #     ]
-    # )
-    data = {
-        'DateTime': ['2024-01-01', '2024-01-01', '2024-01-02', '2024-01-02', '2024-01-03', '2024-01-03'],
-        'Stock': ['AAPL', 'GOOGL', 'AAPL', 'GOOGL', 'AAPL', 'GOOGL'],
-        'Price': [150, 120, 152, 118, 153, 121]
-    }
-
-    # 데이터 프레임 생성
-    df = pd.DataFrame(data)
-
-    # DateTime 열을 datetime 형식으로 변환
-    df['DateTime'] = pd.to_datetime(df['DateTime'])
-
-    # 피벗 테이블 생성
-    pivot_df = df.pivot(index='Stock', columns='DateTime', values='Price')
-    return pivot_df
-
 
 class OpenAIChatMessageCallbackHandler(BaseCallbackHandler):
     message = ""
@@ -169,9 +119,10 @@ def step2_update_new_story(message_content: str):
         append_ai_message("유저 액션에서 스킵할 시간과 포트폴리오를 조정한 후, '확인했습니다.'를 입력해주세요.")
         return
 
-    stock_prices = st.session_state["stock_info_df"][["command", "price"]].to_dict()
+    stock_prices = st.session_state["stock_price_df_data"]['prices']
+    stock_prices_for_prompt = list(zip(STOCK_NAMES, stock_prices))
     with st.chat_message("ai"):
-        st.markdown(f'선택하신 시간은 {st.session_state["user_input_time"]}, 포트폴리오는 {stock_prices}입니다.')
+        st.markdown(f'선택하신 시간은 {st.session_state["user_input_time"]}, 가격은 {stock_prices_for_prompt}입니다.')
 
     new_plot = update_story(
         time=st.session_state["user_input_time"],
@@ -183,18 +134,20 @@ def step2_update_new_story(message_content: str):
         background=st.session_state["background"], new_plot=new_plot
     )
     print(f"STEP2-2: background 갱신. 새로운 background: {new_background}")
+    st.session_state["system_time"] = get_now_time_by_user_input_time(st.session_state["system_time"],
+                                                                      st.session_state["user_input_time"])
 
-    st.session_state["time"] = get_now_time_by_user_input_time(st.session_state["time"],
-                                                               st.session_state["user_input_time"])
-
-    print(f"STEP2-3-1: price 갱신 전. 기존 price: {stock_prices}")
     new_stock_price = update_stock_price(
         background=st.session_state["background"],
         new_plot=new_plot,
         elapsed_time=st.session_state["user_input_time"],
-        price=stock_prices,
+        price=str(stock_prices),
     )
     print(f"STEP2-3-2: price 갱신 후. 새로운 price: {new_stock_price}")
+
+    new_date = (pd.to_datetime(START_SYSTEM_TIME) + pd.DateOffset(months=5)).strftime('%Y-%m-%d')
+    set_data_frame_by_system_price(new_date, STOCK_NAMES, st.session_state["prices"])
+
     st.session_state["background"] = new_background
     st.session_state["status"] = "STEP3"
     return new_stock_price

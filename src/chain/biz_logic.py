@@ -86,7 +86,7 @@ def search_stock_verified(inputs: str):
     return response
 
 
-def update_stock_price(background: str, new_plot: str, elapsed_time: str, price: dict):
+def update_stock_price(background: str, new_plot: str, elapsed_time: str, price: str):
     """
     주가를 업데이트 합니다.
     """
