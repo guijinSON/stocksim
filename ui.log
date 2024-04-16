@@ -1,6 +1,8 @@
+pyenv: streamlit: command not found
 
-  You can now view your Streamlit app in your browser.
+The `streamlit' command exists in these Python versions:
+  3.12.1/envs/assistant
+  assistant
 
-  Local URL: http://localhost:4000
-  Network URL: http://192.168.0.7:4000
-
+Note: See 'pyenv help global' for tips on allowing both
+      python2 and python3 to be found.
