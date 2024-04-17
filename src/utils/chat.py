@@ -1,14 +1,16 @@
+import time
 from typing import Optional
 
 import pandas as pd
 
 from repositories.file_repository import FileRepository
-from src.chain.biz_logic import search_stock_verified, update_story, update_stock_price, update_background, search_stock
+from src.chain import biz_logic
 import streamlit as st
 from langchain_core.callbacks import BaseCallbackHandler
 
 from src.config import settings
-from src.utils.ui import get_now_time_by_user_input_time, START_SYSTEM_TIME, STOCK_NAMES, set_data_frame_by_system_price
+from src.utils.ui import get_now_time_by_user_input_time, START_SYSTEM_TIME, STOCK_NAMES, \
+    set_data_frame_by_system_price, get_portfolio_df_data
 
 
 def get_game_story():
@@ -83,7 +85,7 @@ class StreamlitChatService:
         print("서비스 생성")
 
     def check_is_stock_verified_question(self, message_content: str):
-        message = search_stock_verified(message_content)
+        message = biz_logic.search_stock_verified(message_content)
         return message.content == "[YES]"
 
     def write_logs(self, log_content: str, ai_response: Optional[str] = None):
@@ -97,9 +99,15 @@ class StreamlitChatService:
         # 명령어 작성 및 명령어에 따른 동작 설정 가능
         is_stock_verified_question = self.check_is_stock_verified_question(message_content)
         if is_stock_verified_question:
-            response = search_stock(inputs=message_content, background=st.session_state["background"],
-                                    callbacks=[OpenAIChatMessageCallbackHandler()])
+            with st.chat_message("ai"):
+                st.markdown("주식관련 질문을 해주셨군요!")
+            response = biz_logic.search_stock(
+                inputs=message_content,
+                background=st.session_state["background_history"][-1],
+                callbacks=[OpenAIChatMessageCallbackHandler()]
+            )
             self.write_logs(f"STEP1: 주식관련 질문이 입력되었습니다. 조사결과:", response)
+            st.session_state["stock_search_history"].append(response)
             st.session_state["status"] = "STEP2"
 
         else:
@@ -114,38 +122,58 @@ class StreamlitChatService:
                 st.markdown("유저 액션에서 스킵할 시간과 포트폴리오를 조정한 후, '확인했습니다.'를 입력해주세요.")
             return
 
-        stock_prices = st.session_state["stock_price_df_data"]['prices']
-        stock_prices_for_prompt = list(zip(STOCK_NAMES, stock_prices))
-        with st.chat_message("ai"):
-            st.markdown(f'선택하신 시간은 {st.session_state["user_input_time"]}, 가격은 {stock_prices_for_prompt}입니다.')
+        portfolio_dict_data = get_portfolio_df_data()
+        if sum(st.session_state["portfolio_df_data"]) != 100:
+            with st.chat_message("ai"):
+                st.markdown("각각의 포트폴리오 비율의 합은 100이 되어야 합니다.")
+            return
 
-        new_plot = update_story(
+        stock_prices = st.session_state["stock_price_df_data"]['prices']
+        stock_prices_for_prompt = list(zip(STOCK_NAMES, st.session_state["portfolio_df_data"]))
+        with st.chat_message("ai"):
+            st.markdown(f'선택하신 스킵 시간은 {st.session_state["user_input_time"]}, 포트폴리오는 {stock_prices_for_prompt}입니다.')
+
+        new_plot = biz_logic.update_story(
             time=st.session_state["user_input_time"],
-            background=st.session_state["background"],
+            background=st.session_state["background_history"][-1],
             callbacks=[OpenAIChatMessageCallbackHandler()],
         )
-        self.write_logs(f"STEP2-1: plot 갱신. new_plot:", new_plot)
-        new_background = update_background(
-            background=st.session_state["background"], new_plot=new_plot
+        st.session_state["plot_history"].append(new_plot)
+        self.write_logs(f"STEP2-1: plot 갱신. new_plot:", st.session_state["plot_history"][-1])
+
+        new_background = biz_logic.update_background(
+            background=st.session_state["background_history"][-1], new_plot=st.session_state["plot_history"][-1]
         )
-        self.write_logs(f"STEP2-2: background 갱신. new_background:",  new_background)
+        st.session_state["background_history"].append(new_background)
+        self.write_logs(f"STEP2-2: background 갱신. new_background:", st.session_state["background_history"][-1])
+
         st.session_state["system_time"] = get_now_time_by_user_input_time(st.session_state["system_time"],
                                                                           st.session_state["user_input_time"])
+        new_stock_price = biz_logic.update_stock_price(
+            background=st.session_state["background_history"][-1],
+            new_plot=st.session_state["plot_history"][-1],
+            elapsed_time=st.session_state["user_input_time"],
+            price=str(stock_prices),
+        )
+        st.session_state["stock_price_history"].append(new_stock_price)
+        self.write_logs(f"STEP2-3: 가격 갱신. new_stock_price:", st.session_state["stock_price_history"][-1])
 
-        # new_stock_price = update_stock_price(
-        #     background=st.session_state["background"],
-        #     new_plot=new_plot,
-        #     elapsed_time=st.session_state["user_input_time"],
-        #     price=str(stock_prices),
-        # )
-        # print(f"STEP2-3-2: price 갱신 후.")
-        #
-        # new_date = (pd.to_datetime(START_SYSTEM_TIME) + pd.DateOffset(months=5)).strftime('%Y-%m-%d')
-        # set_data_frame_by_system_price(new_date, STOCK_NAMES, st.session_state["prices"])
+        new_date = (pd.to_datetime(START_SYSTEM_TIME) + pd.DateOffset(months=st.session_state["system_time"])).strftime('%Y-%m-%d')
+        # TODO: 가격 변경하기 -> st.session_state["prices"]
+        set_data_frame_by_system_price(new_date, STOCK_NAMES, st.session_state["prices"])
 
-        st.session_state["background"] = new_background
         st.session_state["status"] = "STEP3"
 
+    def step3_update_new_story(self, message_content: str):
+        if message_content == "계속 진행하겠습니다.":
+            with st.chat_message("ai"):
+                st.markdown("단계가 마무리 되었습니다. '계속 진행하겠습니다.'를 입력해주세요.")
+            return
+        else:
+            with st.chat_message("ai"):
+                st.markdown("처음 단계로 돌아가서 주식 조사를 시작해주세요.")
+            st.session_state["status"] = "STEP1"
+            return
 
     def get_user_input(self):
         message = st.chat_input("Say something", disabled=False, key=self._session_id)
@@ -159,9 +187,9 @@ class StreamlitChatService:
                 case "STEP2":
                     self.step2_update_new_story(message_content=message)
                     # with st.spinner('Wait for it...'):
-                    #     time.sleep(3)
-            if message == "배경":
-                st.write(st.session_state["background"])
+                    #     time.sleep(5)
+                case "STEP3":
+                    self.step3_update_new_story(message_content=message)
         # for message in st.session_state["messages"]:
         #     with st.chat_message(message["role"]):
         #         st.markdown(message["content"])

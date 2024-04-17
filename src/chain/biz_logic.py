@@ -1,4 +1,5 @@
 # 사용자와의 대화를 나누는 Chain
+import time
 from typing import List
 
 from langchain_core.callbacks import BaseCallbackHandler
@@ -12,6 +13,33 @@ from src.parser.custom_output import custom_parser
 MODEL_VERSION = '35'
 
 
+def ai_error_capture(func, max_retries=5, delay_seconds=1):
+    def wrapper(*args, **kwargs):
+        attempts = 0
+        while attempts < max_retries:
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                attempts += 1
+                if attempts == max_retries:
+                    print("Max retries reached, function failed")
+                    raise
+                else:
+                    print(f"Retrying... (Attempt {attempts + 1}/{max_retries})")
+                    time.sleep(delay_seconds)  # 재시도 사이에 일정 시간 대기
+    return wrapper
+
+# def ai_error_capture(func):
+#     def wrapper(*args, **kwargs):
+#         print("Code before function execution")
+#         result = func(*args, **kwargs)
+#         print("Code after function execution")
+#         return result
+#     return wrapper
+
+
+@ai_error_capture
 def search_stock(
         inputs: str, background: str, callbacks: List[BaseCallbackHandler] = []
 ):
@@ -27,6 +55,7 @@ def search_stock(
     return response
 
 
+@ai_error_capture
 def update_story(time: str, background: str, callbacks: List[BaseCallbackHandler] = []):
     """
     전체 스토리를 업데이트 하는 로직
@@ -42,6 +71,7 @@ def update_story(time: str, background: str, callbacks: List[BaseCallbackHandler
     return response.content
 
 
+@ai_error_capture
 def update_background(background: str, new_plot: str):
     """
     백그라운드를 반영하는 로직
@@ -57,6 +87,7 @@ def update_background(background: str, new_plot: str):
     return response.content
 
 
+@ai_error_capture
 def search_stock_verified(inputs: str):
     """
     주식 종목에 대한 검색인지 판단합니다.
@@ -87,6 +118,7 @@ def search_stock_verified(inputs: str):
     return response
 
 
+@ai_error_capture
 def update_stock_price(background: str, new_plot: str, elapsed_time: str, price: str):
     """
     주가를 업데이트 합니다.

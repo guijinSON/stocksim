@@ -3,7 +3,7 @@ from typing import List
 import pandas as pd
 import streamlit as st
 
-START_SYSTEM_TIME = '2050-09-26'
+START_SYSTEM_TIME = '2030-09-26'
 STOCK_NAMES = ["삼성전자", "네이버", "카카오"]
 
 
@@ -27,7 +27,8 @@ def get_now_time_by_user_input_time(now: int, user_input_time: str):
         now += 12
     elif user_input_time == "3Years":
         now += 36
-    return now + st.session_state["system_time"]
+    st.session_state["system_time"] = now
+    return now
 
 
 def set_data_frame_by_system_price(new_date_time: str, stock_names: List[str], new_prices: List[int]):
@@ -55,3 +56,10 @@ def get_data_frame_by_user_portfolio():
     stocks = STOCK_NAMES
     portfolio_df = pd.DataFrame(data=[st.session_state["portfolio_df_data"]], columns=stocks)
     return portfolio_df.reset_index(drop=True)
+
+def get_portfolio_df_data():
+    portfolio_editable_df = st.session_state["portfolio_df"]
+    result = [{"종목": column, "비율": int(portfolio_editable_df[column].values[0])} for column in
+              portfolio_editable_df.columns]
+    st.session_state["portfolio_df_data"] = portfolio_editable_df.iloc[0].tolist()
+    return result

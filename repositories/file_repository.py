@@ -17,7 +17,6 @@ class FileRepository:
 
     def create_or_append_file(self, filepath: str, content):
         directory = os.path.dirname(f"{self._base_path}/")
-        print("DIRECTORY:", directory, " filepath: ", filepath)
         os.makedirs(directory, exist_ok=True)
 
         with open(f"{directory}/{filepath}", 'a') as file:
@@ -25,13 +24,11 @@ class FileRepository:
 
     def write_file(self, filename: str, data: dict):
         self.create_or_overwrite_file(filename)
-        logger.info(f"FILE NAME TO SAVE: {filename}")
         with open(f"{self._base_path}/{filename}", "w") as json_file:
             json.dump(data, json_file)
 
     def read_file(self, filename, file_type: str = "json"):
         try:
-            print(f"{self._base_path}/{filename}")
             full_path: str = f"{self._base_path}/{filename}.{file_type}"
             if file_type == "json":
                 with open(full_path, "r") as json_file:

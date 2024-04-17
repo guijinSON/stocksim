@@ -17,18 +17,23 @@ def get_chat_history():
 
 
 def streamlit_init():
-
     if 'session_key' not in st.session_state:
         # 세션 키로 UUID 또는 현재 시각을 사용합니다.
         st.session_state['session_key'] = str(uuid.uuid4())
         st.session_state['service'] = StreamlitChatService(str(uuid.uuid4()))
 
     if "messages" not in st.session_state:
-        print("여기로 들어옴")
         st.session_state["messages"] = []
         st.session_state[
-            "background"
-        ] = get_game_initial_background()
+            "background_history"
+        ] = [get_game_initial_background(), ]
+        st.session_state[
+            "plot_history"
+        ] = []
+        st.session_state[
+            "stock_price_history"
+        ] = []
+        st.session_state["stock_search_history"] = []  # 초기 유저 포트폴리오
         st.session_state["market"] = []  # 시장
         st.session_state["stocks"] = []  # 시장
         st.session_state["actions"] = []  # 유저 액션
@@ -38,7 +43,8 @@ def streamlit_init():
         st.session_state["stock_info_df"] = 0  # 유저 포트폴리오 정보
         st.session_state["status"] = "STEP1"
         st.session_state["prices"] = [300000, 700000, 40000]
-        st.session_state["portfolio_df_data"] = [50, 25, 25]  # 유저 포트폴리오
+        st.session_state["portfolio_df_data"] = [0, 0, 0]  # 초기 유저 포트폴리오
+        st.session_state["portfolio_df"] = None  # 초기 유저 포트폴리오
         st.session_state["stock_price_df_data"] = {
             'date_times': [],
             'stocks': [],
@@ -106,8 +112,14 @@ def streamlit_init():
             st.dataframe(stock_price_df)
 
         with st.container(height=500):
-            st.write(st.session_state["background"])
-            # print(edited_df.to_dict('records'))
+            st.subheader("배경설명 히스토리")
+            for background_content in st.session_state["background_history"]:
+                st.write(background_content + "\n\n------------------------------------\n\n")
+
+        with st.container(height=500):
+            st.subheader("조사 결과 히스토리")
+            for stock_search_content in st.session_state["stock_search_history"]:
+                st.write(stock_search_content + "\n\n------------------------------------\n\n")
 
     # NOTE: 사용자 액션이 일어나는 것을 캐치 -> 변화가 있으면 json에 저장하기
     # NOTE: 수정 버튼 입력해서 그 버튼을 눌렀을 경우에만 해당 데이터를 파싱하는 방법으로 받아오기
