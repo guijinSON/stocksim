@@ -42,7 +42,7 @@ def get_game_story():
         ---
         
         그럼 이제 게임을 시작하겠습니다. 검색하고 싶은 주식을 설명해주세요. 
-        매 턴마다 주식 조사는 한번만 가능하니 신중하게 해야합니다. (ex. PROMETHEUS 의 경쟁사를 개발 중인 회사는 뭐가 있어?, PROMETHEUS 개발 참여 기업, 등)
+        매 턴마다 주식 조사는 한번만 가능하니 신중하게 해야합니다. (ex. PROMETHEUS 의 경쟁사를 개발 중인 회사는 뭐가 있어?, PROMETHEUS 개발 참여 기업에 대해 가르쳐줘 등)
         """
     )
 
@@ -50,17 +50,17 @@ def get_game_story():
 def get_game_initial_background():
     return (
 """
-- 삼성전자 (005930.KS) - 삼성전자는 프로메테우스 프로젝트의 개발을 주도하며, 자사의 고성능 GPU와 NPU를 통해 AI 분야에서 기술력을 입증했습니다. 2030년 현재, 삼성전자는 프로메테우스를 스마트폰, 스마트 TV 등 소비자 가전 제품에 탑재해 차별화된 사용자 경험을 제공하고 있습니다. 또한, 산업용 AI 솔루션 개발에도 나서며 스마트 팩토리와 스마트 시티 분야에서 혁신을 주도하고 있습니다.
+삼성전자 (005930.KS) - 삼성전자는 프로메테우스 프로젝트의 개발을 주도하며, 자사의 고성능 GPU와 NPU를 통해 AI 분야에서 기술력을 입증했습니다. 2030년 현재, 삼성전자는 프로메테우스를 스마트폰, 스마트 TV 등 소비자 가전 제품에 탑재해 차별화된 사용자 경험을 제공하고 있습니다. 또한, 산업용 AI 솔루션 개발에도 나서며 스마트 팩토리와 스마트 시티 분야에서 혁신을 주도하고 있습니다.
 
-- SK하이닉스 (000660.KS) - SK하이닉스는 AI 옵티마이저 프로젝트를 통해 독자적인 AGI 기술 개발에 집중하며, 메모리 반도체 설계와 AI 알고리즘을 결합하여 생산 효율성을 높이고 범용 AGI 기술 발전에 기여하고 있습니다. 현재는 프로메테우스의 발전을 지켜보며 상호 협력 가능성을 모색하고 있으며, AI 옵티마이저를 프로메테우스 수준으로 고도화하는 도전에는 시간과 노력이 필요할 것으로 예상됩니다.
+SK하이닉스 (000660.KS) - SK하이닉스는 AI 옵티마이저 프로젝트를 통해 독자적인 AGI 기술 개발에 집중하며, 메모리 반도체 설계와 AI 알고리즘을 결합하여 생산 효율성을 높이고 범용 AGI 기술 발전에 기여하고 있습니다. 현재는 프로메테우스의 발전을 지켜보며 상호 협력 가능성을 모색하고 있으며, AI 옵티마이저를 프로메테우스 수준으로 고도화하는 도전에는 시간과 노력이 필요할 것으로 예상됩니다.
 
-- 네이버 (035420.KS) - 네이버의 AGI 모델 '하이퍼클로바 X'개발하여 프로메테우스와 경쟁 중이며, 성능 면에서는 아직 미흡하지만 방대한 데이터와 도메인 전문성으로 경쟁력을 갖추고 있습니다. 하이퍼클로바 X를 자사 서비스에 접목하여 혁신적인 사용자 경험을 제공하고 동시에 B2B 시장 공략을 가속화하며 글로벌 시장에진출하기 위한 계획을 세우고 있습니다.
+네이버 (035420.KS) - 네이버의 AGI 모델 '하이퍼클로바 X'개발하여 프로메테우스와 경쟁 중이며, 성능 면에서는 아직 미흡하지만 방대한 데이터와 도메인 전문성으로 경쟁력을 갖추고 있습니다. 하이퍼클로바 X를 자사 서비스에 접목하여 혁신적인 사용자 경험을 제공하고 동시에 B2B 시장 공략을 가속화하며 글로벌 시장에진출하기 위한 계획을 세우고 있습니다.
 
-- 카카오 (035720.KS) - 카카오의 AI 모델 '카카오브레인'은 현재 네이버나 프로메테우스에 비해 성능이 미흡하며, 제한된 도메인에서의 서비스만을 제공하고 있으며 AGI로의 발전 가능성은 낮아 보입니다. 카카오는 AI 기술 개발이 상대적으로 늦어진 점과 투자 규모의 한정, 인재 확보 어려움 등으로 경쟁에서 뒤처진 상황이며, 이를 극복하기 위해 공격적인 AI 투자와 인수합병을 통해 기술력과 인재 풀을 강화하고 있습니다.
+카카오 (035720.KS) - 카카오의 AI 모델 '카카오브레인'은 현재 네이버나 프로메테우스에 비해 성능이 미흡하며, 제한된 도메인에서의 서비스만을 제공하고 있으며 AGI로의 발전 가능성은 낮아 보입니다. 카카오는 AI 기술 개발이 상대적으로 늦어진 점과 투자 규모의 한정, 인재 확보 어려움 등으로 경쟁에서 뒤처진 상황이며, 이를 극복하기 위해 공격적인 AI 투자와 인수합병을 통해 기술력과 인재 풀을 강화하고 있습니다.
 
-- 셀바스AI (108860.KS) - 셀바스AI는 HCI 기술로 디지털 전환을 주도했지만, 프로메테우스의 등장으로 시장에서 타격을 입었고 경쟁력을 유지하기 위해 AGI 기술에 투자했으나 대형 파트너들의 전략적 파트너십으로 뒤처지기 시작했습니다. AGI의 범용성과 유연성에 비해 셀바스AI의 기술은 제한적이어서 시장에서의 점유율을 잃고 있습니다.
+셀바스AI (108860.KS) - 셀바스AI는 HCI 기술로 디지털 전환을 주도했지만, 프로메테우스의 등장으로 시장에서 타격을 입었고 경쟁력을 유지하기 위해 AGI 기술에 투자했으나 대형 파트너들의 전략적 파트너십으로 뒤처지기 시작했습니다. AGI의 범용성과 유연성에 비해 셀바스AI의 기술은 제한적이어서 시장에서의 점유율을 잃고 있습니다.
 
-- 한글과컴퓨터 (030520.KR) - 한글과컴퓨터는 프로메테우스 AGI의 부상으로 오피스 소프트웨어 시장에서의 변화에 대응하기 위해 전략을 재조정했습니다. 기존 역량과 공공기관 및 기업 시장에서의 입지를 활용하며, 오픈 소스 커뮤니티와 협력하여 AI 기능을 플러그인으로 개발하고 '한컴구름' OS를 AGI와 연동하는 개방형 플랫폼으로 전환하고자 노력하고 있습니다.
+한글과컴퓨터 (030520.KR) - 한글과컴퓨터는 프로메테우스 AGI의 부상으로 오피스 소프트웨어 시장에서의 변화에 대응하기 위해 전략을 재조정했습니다. 기존 역량과 공공기관 및 기업 시장에서의 입지를 활용하며, 오픈 소스 커뮤니티와 협력하여 AI 기능을 플러그인으로 개발하고 '한컴구름' OS를 AGI와 연동하는 개방형 플랫폼으로 전환하고자 노력하고 있습니다.
 """
     )
 
@@ -134,9 +134,9 @@ class StreamlitChatService:
         #         )
         #     st.session_state["status"] = "STEP1"
         with st.chat_message("ai"):
-            st.markdown("제공되는 글을 확인하시고 오른쪽 유저 액션 창에서 스킵할 시간과 포트폴리오를 조정한 후, '계속 진행합니다.'를 입력해주세요. 📑")
+            st.markdown("AI 모델 답변이 제공되고 있습니다. 제공되는 글을 천천히 읽어주세요.📑")
             append_ai_message(
-                "제공되는 글을 확인하시고 오른쪽 유저 액션 창에서 스킵할 시간과 포트폴리오를 조정한 후, '계속 진행합니다.'를 입력해주세요. 📑"
+                "AI 모델 답변이 제공되고 있습니다. 제공되는 글을 천천히 읽어주세요.📑"
             )
         response = biz_logic.search_stock(
             inputs=message_content,
@@ -154,24 +154,23 @@ class StreamlitChatService:
         portfolio_ratio_list = st.session_state["portfolio_ratio_list"]
         print("포트폴리오 dictionary 내용:", portfolio_data_dict, ", 포트폴리오 비율:", portfolio_ratio_list)
         if sum(portfolio_ratio_list) != 100:
-            with st.chat_message("ai"):
-                st.markdown("각각의 포트폴리오 비율의 합은 100이 되어야 해요.🥹")
+            st.info("[STEP2] 각각의 포트폴리오 비율의 합은 100이 되어야 해요.🥹")
             return
 
         # NOTE: 주식 금액 확인
         stock_prices_for_prompt = list(zip(STOCK_NAMES, portfolio_ratio_list))
         with st.chat_message("ai"):
-            st.markdown(f'{stock_prices_for_prompt} 포트폴리오로 구성하셨군요! {st.session_state["user_input_time"]} 이후 상황을 말씀드릴게요.🤖')
+            st.markdown(f'{stock_prices_for_prompt}와 같이 포트폴리오를 구성하셨군요!👏\n  {st.session_state["user_input_time"]} 이후 상황을 말씀드릴게요.🤖')
 
         # NOTE: 시간 조정하기 (유저가 스킵하고자하는 시간 설정)
         st.session_state["system_time"] = get_now_time_by_user_input_time(st.session_state["system_time"],
                                                                           st.session_state["user_input_time"])
 
-        envi_event = generate_env_event() if generate_env_event() != "" else "없음"
+        tmp_envi_event = generate_env_event()
+        envi_event = tmp_envi_event if tmp_envi_event != "" else "없음"
         stock_event = generate_stock_event(STOCK_NAMES)
-        with st.chat_message("ai"):
-            st.warning(f'예상치 못한 사건이 발생했습니다. 사회적/환경적 사건: {envi_event}, 주식 관련 사건: {stock_event}', icon="⚠️")
-            append_ai_message(f'⚠️예상치 못한 사건이 발생했습니다. 사회적/환경적 사건: {envi_event}, 주식 관련 사건: {stock_event}')
+        st.warning(f'예상치 못한 사건이 발생했습니다. 사회적/환경적 사건: {envi_event}, 주식 관련 사건: {stock_event}', icon="⚠️")
+        append_ai_message(f'⚠️예상치 못한 사건이 발생했습니다. 사회적/환경적 사건: {envi_event}, 주식 관련 사건: {stock_event}')
         # NOTE: 새로운 배경 설명 가져오기
         new_background = biz_logic.update_background(
             background=st.session_state["background_history"][-1],
@@ -239,25 +238,29 @@ class StreamlitChatService:
 
         match st.session_state["status"]:
             case "STEP1":
-                if message := st.chat_input("Say something", disabled=False, key=self._session_id):
+                if message := st.chat_input("🔍 정보를 검색하세요.", disabled=False, key=self._session_id):
                     append_user_message(message)
                     self.step1_check_stock_question(message_content=message)
+                else:
+                    st.info("[STEP1] 각 기업의 주식에 대한 검색을 통해 정보를 얻어보세요.🔦")
             case "STEP2":
                 col1, col2 = st.columns([0.85, 0.15])
                 button_flag = False
                 with col1:
-                    st.chat_input("Say something", disabled=True, key=self._session_id)
+                    st.chat_input("🔍 정보를 검색하세요.", disabled=True, key=self._session_id)
                 with col2:
                     if st.button('계속 진행합니다.'):
                         button_flag = True
                 if button_flag:
                     self.step2_update_new_story()
+                else:
+                    st.info("[STEP2] 투자할 기업들에 대한 포트폴리오를 조정하고 스킵할 시간을 선택하세요.☕️")
 
             case "STEP3":
                 col1, col2 = st.columns([0.75, 0.25])
                 button_flag = False
                 with col1:
-                    st.chat_input("Say something", disabled=True, key=self._session_id)
+                    st.chat_input("🔍 정보를 검색하세요.", disabled=True, key=self._session_id)
                 with col2:
                     if st.button('다음 투자 라운드를 진행합니다.'):
                         button_flag = True
@@ -265,7 +268,8 @@ class StreamlitChatService:
                     wb.open_new_tab(
                         f"https://pages.coupang.com/f/s14445?from=home_C2&traid=home_C2&trcid=11370359")
                     self.step3_full_step_done()
-
+                else:
+                    st.info("[STEP3] 투자 라운드를 마쳤습니다. 다음 투자 라운드도 진행 해주실거죠?🤓")
 
 # 메시지 저장(History 에 사용 가능)
 def append_ai_message(content: str):

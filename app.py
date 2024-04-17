@@ -60,34 +60,12 @@ def streamlit_init():
     # TODO 신규 사용자라면 새로 생성해주고, 기존 사용자라면 입력받고 Chat history 불러올 수 있도록 구현해야
     col1, col2 = st.columns([0.35, 0.65])
     with col1:
-        with st.container(height=280):
+        with st.container(height=250):
             st.markdown("##### 진행상황\n")
-            st.markdown(f'###### 흐른시간: {st.session_state["system_time"]}개월 / 60개월 (5년)')
-
-            step = get_step_for_step_progress(st.session_state["status"])
-            data_df = pd.DataFrame(
-                {
-                    "step": [step],
-                }
-            )
-
-            st.data_editor(
-                data_df,
-                column_config={
-                    "step": st.column_config.ProgressColumn(
-                        "현재 진행중인 단계",
-                        width="large",
-                        help="The sales volume in USD",
-                        format="%f단계",
-                        min_value=0,
-                        max_value=4,
-                    ),
-                },
-                hide_index=True,
-            )
-
-            st.markdown(f"**현재 주식 자본금: {format_number_with_commas(st.session_state['total_investment'])}원**")
-            st.markdown(f"**누적 수익률: {calculate_revenue(st.session_state['init_investment'], st.session_state['total_investment'])}%, 라운드 수익률: {st.session_state['roi_history'][-1]}%**")
+            st.markdown(f'**경과시간: {st.session_state["system_time"]}개월 / 60개월 (5년)**')
+            st.divider()
+            st.markdown(f"**💰 현재 주식 자본금: {format_number_with_commas(st.session_state['total_investment'])}원**")
+            st.markdown(f"**🧮 누적 수익률: {calculate_revenue(st.session_state['init_investment'], st.session_state['total_investment'])}%, 라운드 수익률: {st.session_state['roi_history'][-1]}%**")
 
         with st.container(height=330):
             st.markdown("##### 유저 액션")
@@ -104,12 +82,12 @@ def streamlit_init():
             st.session_state["portfolio_df"] = st.data_editor(portfolio_df)
 
         with st.container(height=330):
-            st.markdown("##### 주식가격 히스토리")
+            st.markdown("##### 주식가격 변동상황")
             stock_price_df = get_data_frame_by_system_price()
             st.dataframe(stock_price_df)
 
         with st.container(height=500):
-            st.markdown("##### 배경설명 히스토리")
+            st.markdown("##### 배경설명 기록")
             for background_content in st.session_state["background_history"]:
                 st.write(background_content + "\n\n------------------------------------\n\n")
 
@@ -119,9 +97,13 @@ def streamlit_init():
                 st.session_state["system_time"] >= st.session_state["system_time_end"]
                 and st.session_state["status"] == "STEP1"
         ):
-            st.markdown(f"### 최종 자본: {st.session_state['total_investment']}")
-            st.markdown(f"### 최종 수익률: {st.session_state['final_roi']}")
+            st.info(f'최종 자본: {format_number_with_commas(st.session_state["total_investment"])}', icon="💰")
+            if st.session_state["final_roi"] >= 0:
+                st.info(f'최종 수익률: {st.session_state["final_roi"]}', icon="📈")
+            else:
+                st.info(f'최종 수익률: {st.session_state["final_roi"]}', icon="📉")
             st.markdown(f"---")
+
             st.markdown(f"### 엔딩 스토리")
             st.markdown(f"{st.session_state['ending_story']}")
 
@@ -148,7 +130,7 @@ def streamlit_init():
                 st.session_state['service'].get_user_input()
 
             with st.container(height=500):
-                st.subheader("대화 히스토리")
+                st.markdown("##### 대화 기록")
                 for message in st.session_state["messages"]:
                     with st.chat_message(message["role"]):
                         st.markdown(message["content"])

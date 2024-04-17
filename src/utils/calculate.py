@@ -54,8 +54,10 @@ def calculate_new_price(stock_names: List[str], time: int, current_price: List[i
             new_price_list.append(new_price)
     return new_price_list
 
+
 def calculate_revenue(old_investment, new_investment):
     return round((new_investment - old_investment) / old_investment * 100, 2)
+
 
 def format_number_with_commas(number: str):
     return format(number, ",")
