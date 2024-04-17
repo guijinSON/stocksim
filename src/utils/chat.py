@@ -11,7 +11,7 @@ from langchain_core.callbacks import BaseCallbackHandler
 
 from src.chain.biz_logic import summary_background, ending_story
 from src.config import settings
-from src.utils.calculate import calculate_new_price, calculate_roi, get_stock_price_dict_by_two_list
+from src.utils.calculate import calculate_new_price, calculate_roi, get_stock_price_dict_by_two_list, calculate_revenue
 from src.utils.event import generate_env_event, generate_stock_event
 from src.utils.ui import get_now_time_by_user_input_time, START_SYSTEM_TIME, STOCK_NAMES, set_portfolio_df_data, \
     set_data_frame_by_system_price
@@ -106,33 +106,47 @@ class StreamlitChatService:
             self._file_repo.create_or_append_file(self._ai_response_file_name, f'"""\n{ai_response}\n"""\n----------')
 
     def step1_check_stock_question(self, message_content: str):
-        self.write_logs(f"STEP1 [USER]: 주식관련 질문이 입력되었는지 확인합니다.", user_message=message_content)
-        is_stock_verified_question = self.check_is_stock_verified_question(message_content)
-
-        self.write_logs(f"STEP1 [AI]: 주식관련 질문 맞는지 확인합니다. 결과:", ai_response=is_stock_verified_question)
-        if is_stock_verified_question == "[YES]":
-            with st.chat_message("ai"):
-                st.markdown("주식관련 질문을 해주셨군요! 제공되는 글을 확인하시고 오른쪽 유저 액션 창에서 스킵할 시간과 포트폴리오를 조정한 후, '계속 진행합니다.'를 입력해주세요.")
-                append_ai_message(
-                    "주식관련 질문을 해주셨군요! 제공되는 글을 확인하시고 오른쪽 유저 액션 창에서 스킵할 시간과 포트폴리오를 조정한 후, '계속 진행합니다.'를 입력해주세요."
-                )
-            response = biz_logic.search_stock(
-                inputs=message_content,
-                background=st.session_state["background_history"][-1],
-                callbacks=[OpenAIChatMessageCallbackHandler()]
+        # self.write_logs(f"STEP1 [USER]: 주식관련 질문이 입력되었는지 확인합니다.", user_message=message_content)
+        # is_stock_verified_question = self.check_is_stock_verified_question(message_content)
+        #
+        # self.write_logs(f"STEP1 [AI]: 주식관련 질문 맞는지 확인합니다. 결과:", ai_response=is_stock_verified_question)
+        # if is_stock_verified_question == "[YES]":
+        #     with st.chat_message("ai"):
+        #         st.markdown("주식관련 질문을 해주셨군요! 제공되는 글을 확인하시고 오른쪽 유저 액션 창에서 스킵할 시간과 포트폴리오를 조정한 후, '계속 진행합니다.'를 입력해주세요.")
+        #         append_ai_message(
+        #             "주식관련 질문을 해주셨군요! 제공되는 글을 확인하시고 오른쪽 유저 액션 창에서 스킵할 시간과 포트폴리오를 조정한 후, '계속 진행합니다.'를 입력해주세요."
+        #         )
+        #     response = biz_logic.search_stock(
+        #         inputs=message_content,
+        #         background=st.session_state["background_history"][-1],
+        #         callbacks=[OpenAIChatMessageCallbackHandler()]
+        #     )
+        #     self.write_logs(f"STEP1 [AI]: 주식관련 질문이 입력되었습니다. 조사결과:", ai_response=response)
+        #     st.session_state["stock_search_history"].append(response)
+        #     # NOTE: 다음 스텝으로 변경하기
+        #     st.session_state["status"] = "STEP2"
+        # else:
+        #     self.write_logs(f"STEP1 [USER]: 주식관련 질문이 입력되지 않아, 다시 요청합니다.", user_message=message_content)
+        #     with st.chat_message("ai"):
+        #         st.markdown("주식관련 질문으로 먼저 정보를 얻어보세요. 주식 관련 질문은 한 턴에 한 번 밖에 할 수 없으므로 신중하게 하셔야합니다.")
+        #         append_ai_message(
+        #             "주식관련 질문으로 먼저 정보를 얻어보세요. 주식 관련 질문은 한 턴에 한 번 밖에 할 수 없으므로 신중하게 하셔야합니다."
+        #         )
+        #     st.session_state["status"] = "STEP1"
+        with st.chat_message("ai"):
+            st.markdown("제공되는 글을 확인하시고 오른쪽 유저 액션 창에서 스킵할 시간과 포트폴리오를 조정한 후, '계속 진행합니다.'를 입력해주세요. 📑")
+            append_ai_message(
+                "제공되는 글을 확인하시고 오른쪽 유저 액션 창에서 스킵할 시간과 포트폴리오를 조정한 후, '계속 진행합니다.'를 입력해주세요. 📑"
             )
-            self.write_logs(f"STEP1 [AI]: 주식관련 질문이 입력되었습니다. 조사결과:", ai_response=response)
-            st.session_state["stock_search_history"].append(response)
-            # NOTE: 다음 스텝으로 변경하기
-            st.session_state["status"] = "STEP2"
-        else:
-            self.write_logs(f"STEP1 [USER]: 주식관련 질문이 입력되지 않아, 다시 요청합니다.", user_message=message_content)
-            with st.chat_message("ai"):
-                st.markdown("주식관련 질문으로 먼저 정보를 얻어보세요. 주식 관련 질문은 한 턴에 한 번 밖에 할 수 없으므로 신중하게 하셔야합니다.")
-                append_ai_message(
-                    "주식관련 질문으로 먼저 정보를 얻어보세요. 주식 관련 질문은 한 턴에 한 번 밖에 할 수 없으므로 신중하게 하셔야합니다."
-                )
-            st.session_state["status"] = "STEP1"
+        response = biz_logic.search_stock(
+            inputs=message_content,
+            background=st.session_state["background_history"][-1],
+            callbacks=[OpenAIChatMessageCallbackHandler()]
+        )
+        self.write_logs(f"STEP1 [AI]: 주식관련 질문이 입력되었습니다. 조사결과:", ai_response=response)
+        st.session_state["stock_search_history"].append(response)
+        # NOTE: 다음 스텝으로 변경하기
+        st.session_state["status"] = "STEP2"
 
     def step2_update_new_story(self):
         # NOTE: 포트폴리오 확인
@@ -141,13 +155,13 @@ class StreamlitChatService:
         print("포트폴리오 dictionary 내용:", portfolio_data_dict, ", 포트폴리오 비율:", portfolio_ratio_list)
         if sum(portfolio_ratio_list) != 100:
             with st.chat_message("ai"):
-                st.markdown("각각의 포트폴리오 비율의 합은 100이 되어야 합니다.")
+                st.markdown("각각의 포트폴리오 비율의 합은 100이 되어야 해요.🥹")
             return
 
         # NOTE: 주식 금액 확인
         stock_prices_for_prompt = list(zip(STOCK_NAMES, portfolio_ratio_list))
         with st.chat_message("ai"):
-            st.markdown(f'선택하신 스킵 시간은 {st.session_state["user_input_time"]}, 포트폴리오는 {stock_prices_for_prompt}입니다.')
+            st.markdown(f'{stock_prices_for_prompt} 포트폴리오로 구성하셨군요! {st.session_state["user_input_time"]} 이후 상황을 말씀드릴게요.🤖')
 
         # NOTE: 시간 조정하기 (유저가 스킵하고자하는 시간 설정)
         st.session_state["system_time"] = get_now_time_by_user_input_time(st.session_state["system_time"],
@@ -204,17 +218,17 @@ class StreamlitChatService:
 
     def step3_full_step_done(self):
         if st.session_state["system_time"] >= st.session_state["system_time_end"]:
-            roi = round((st.session_state["total_investment"] - st.session_state["init_investment"]) / st.session_state["init_investment"] * 100, 2)
+            roi = calculate_revenue(st.session_state["init_investment"], st.session_state["total_investment"])
             st.session_state["final_roi"] = roi
             st.session_state["ending_story"] = ending_story(
                 background=st.session_state["background_history"][-1], roi=roi
             )
-            st.markdown("혼란스럽고 예측 불가능한 상황 속에서, 여러분은 슬기로운 투자자로서 주식 시장의 거친 파도를 헤쳐오느라 고생 많으셨습니다!")
+            st.markdown("혼란스럽고 예측 불가능한 상황 속에서, 여러분은 슬기로운 투자자로서 주식 시장의 거친 파도를 헤쳐오느라 고생 많으셨습니다!🙌")
             if st.button('게임 종료하기'):
                 st.write("게임을 종료합니다.")
         else:
             with st.chat_message("ai"):
-                st.markdown("지금까지 수익률은 만족스러우신가요? 이번에는 더 면밀하게 주식을 살펴봅시다.")
+                st.markdown("지금까지 수익률은 만족스러우신가요? 이번에는 더 면밀하게 주식을 살펴봅시다.📈")
                 if st.button('계속하기'):
                     st.write("다음 단계로 넘어갑니다.")
         st.session_state["status"] = "STEP1"

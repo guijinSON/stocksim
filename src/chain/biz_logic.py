@@ -61,7 +61,7 @@ def summary_background(
             prompt | llm
     )
     response = chain.invoke({"background": background})
-    return response
+    return response.content
 
 @ai_error_capture
 def ending_story(

@@ -3,6 +3,7 @@ import uuid
 import pandas as pd
 import streamlit as st
 
+from src.utils.calculate import calculate_revenue, format_number_with_commas
 from src.utils.chat import (
     get_game_story, get_game_initial_background, StreamlitChatService
 )
@@ -27,7 +28,7 @@ def streamlit_init():
         st.session_state[
             "background_history"
         ] = [get_game_initial_background(), ]
-        st.session_state["prices"] = [351100, 523000, 302400, 12800, 187100, 82900]
+        st.session_state["prices"] = [351100, 523000, 302400, 128000, 187100, 82900]
         st.session_state[
             "stock_price_history"
         ] = [st.session_state["prices"]]
@@ -85,8 +86,8 @@ def streamlit_init():
                 hide_index=True,
             )
 
-            st.markdown(f"현재 주식 자본금: {st.session_state['total_investment']}원")
-            st.markdown(f"라운드 수익률: {st.session_state['roi_history'][-1]}%")
+            st.markdown(f"**현재 주식 자본금: {format_number_with_commas(st.session_state['total_investment'])}원**")
+            st.markdown(f"**누적 수익률: {calculate_revenue(st.session_state['init_investment'], st.session_state['total_investment'])}%, 라운드 수익률: {st.session_state['roi_history'][-1]}%**")
 
         with st.container(height=330):
             st.markdown("##### 유저 액션")
