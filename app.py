@@ -93,7 +93,7 @@ def streamlit_init():
             portfolio_df = get_data_frame_by_user_portfolio()
             st.session_state["portfolio_df"] = st.data_editor(portfolio_df)
 
-        with st.container(height=310):
+        with st.container(height=330):
             st.markdown("##### 주식가격 히스토리")
             stock_price_df = get_data_frame_by_system_price()
             st.dataframe(stock_price_df)
@@ -102,11 +102,6 @@ def streamlit_init():
             st.markdown("##### 배경설명 히스토리")
             for background_content in st.session_state["background_history"]:
                 st.write(background_content + "\n\n------------------------------------\n\n")
-
-        with st.container(height=500):
-            st.markdown("##### 조사 결과 히스토리")
-            for stock_search_content in st.session_state["stock_search_history"]:
-                st.write(stock_search_content + "\n\n------------------------------------\n\n")
 
     with col2:
         with st.container(height=1000):

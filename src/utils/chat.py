@@ -8,7 +8,9 @@ from src.chain import biz_logic
 import streamlit as st
 from langchain_core.callbacks import BaseCallbackHandler
 
+from src.chain.biz_logic import summary_background
 from src.config import settings
+from src.utils.event import generate_env_event, generate_stock_event
 from src.utils.ui import get_now_time_by_user_input_time, START_SYSTEM_TIME, STOCK_NAMES, \
     set_data_frame_by_system_price, get_portfolio_df_data
 
@@ -84,7 +86,7 @@ class OpenAIChatMessageCallbackHandler(BaseCallbackHandler):
         self.message_box.markdown(self.message)
 
 
-def calculate_new_price(time: int, current_price: List[int]):
+def calculate_new_price(time: int, current_price: List[int], background: str):
     import torch
     import numpy as np
     from transformers import AutoModelForSequenceClassification, AutoTokenizer
@@ -104,7 +106,7 @@ def calculate_new_price(time: int, current_price: List[int]):
 
     new_price_list = []
     for k, v in price_dict.items():
-        input_str = f"{text}</s> {k}"
+        input_str = f"{background}</s> {k}"
 
         with torch.no_grad():
             input = tokenizer(input_str, return_tensors='pt')
@@ -166,12 +168,6 @@ class StreamlitChatService:
             st.session_state["status"] = "STEP1"
 
     def step2_update_new_story(self):
-        # self.write_logs(f"STEP2 [USER]: 유저의 질문:", user_message=message_content)
-        # if message_content != "계속 진행합니다.":
-        #     with st.chat_message("ai"):
-        #         st.markdown("오른쪽 유저 액션 창에서 스킵할 시간과 포트폴리오를 조정한 후, '계속 진행합니다.'를 입력해주세요.")
-        #     return
-
         portfolio_dict_data = get_portfolio_df_data()
         # NOTE: 포트폴리오 확인
         print("포트폴리오 내용:", portfolio_dict_data)
@@ -184,44 +180,54 @@ class StreamlitChatService:
         stock_prices_for_prompt = list(zip(STOCK_NAMES, st.session_state["portfolio_df_data"]))
         with st.chat_message("ai"):
             st.markdown(f'선택하신 스킵 시간은 {st.session_state["user_input_time"]}, 포트폴리오는 {stock_prices_for_prompt}입니다.')
+
+        # NOTE: 시간 조정하기 (유저가 스킵하고자하는 시간 설정)
         st.session_state["system_time"] = get_now_time_by_user_input_time(st.session_state["system_time"],
                                                                           st.session_state["user_input_time"])
 
-
         print(f"추가되는 search history: {st.session_state['stock_search_history']}")
-        # NOTE: 새로운 Plot 기반으로 배경 설명 가져오기
+
+
+        envi_event = generate_env_event()
+        stock_event = generate_stock_event(STOCK_NAMES)
+        with st.chat_message("ai"):
+            st.warning(f'예상치 못한 사건이 발생했습니다. 사회적/환경적 사건: {envi_event}, 주식 관련 사건: {stock_event}', icon="⚠️")
+            append_ai_message(f'⚠️예상치 못한 사건이 발생했습니다. 사회적/환경적 사건: {envi_event}, 주식 관련 사건: {stock_event}')
+        # NOTE: 새로운 배경 설명 가져오기
         new_background = biz_logic.update_background(
             background=st.session_state["background_history"][-1],
             system_time=st.session_state["system_time"],
             search_result=st.session_state["stock_search_history"][-1],
+            envi_event=envi_event,
+            stock_event=stock_event,
             callbacks=[OpenAIChatMessageCallbackHandler()]
         )
+
         st.session_state["background_history"].append(new_background)
         self.write_logs(f"STEP2-1 [AI MODEL]: background 갱신. new_background:",
                         ai_response=st.session_state["background_history"][-1])
 
-        # NOTE: 시간 조정하기 (유저가 스킵하고자하는 시간 설정)
-
         # NOTE: 변경된 배경 상황에 따라 주식 가격 업데이트 하기
-        new_stock_price = calculate_new_price(st.session_state["system_time"], st.session_state["prices"])
+        summarized_background = summary_background(background=st.session_state["background_history"][-1])
+        print("BACKGROUND SUMMARY:", summarized_background)
+        new_stock_price = calculate_new_price(st.session_state["system_time"], st.session_state["prices"], background=summarized_background)
         st.session_state["prices"] = new_stock_price
         st.session_state["stock_price_history"].append(new_stock_price)
         self.write_logs(f"STEP2-2 [AI MODEL]: 가격 갱신. new_stock_price:",
                         ai_response=st.session_state["stock_price_history"][-1])
-        # NOTE: 다음 스텝으로 변경하기
-        # FIXME: 중간에 오류가 발생하면 다시 시도해달라고 해야됨.
 
+        # FIXME: 중간에 오류가 발생하면 다시 시도해달라고 해야됨.
         # NOTE: 갱신된 가격 등록해서 DF에 추가하기
         new_date: str = (
                 pd.to_datetime(START_SYSTEM_TIME) + pd.DateOffset(months=st.session_state["system_time"])
         ).strftime('%Y-%m-%d')
         set_data_frame_by_system_price(new_date, STOCK_NAMES, st.session_state["prices"])
         st.session_state["status"] = "STEP3"
-
+        print("RENEW PRICE:", new_stock_price)
 
     def step3_full_step_done(self):
         with st.chat_message("ai"):
-            st.markdown("처음 단계로 돌아가서 주식 조사를 시작해주세요.")
+            st.markdown("지금까지 수익률은 만족스러우신가요? 이번에는 더 면밀하게 주식을 살펴봅시다.")
             if st.button('확인'):
                 st.write("다음 단계로 넘어갑니다.")
         st.session_state["status"] = "STEP1"
@@ -231,7 +237,6 @@ class StreamlitChatService:
         self.write_logs(f'현재 스텝: {st.session_state["status"]}')
 
         # TODO: 흐른 시간 확인 -> 게임 종료조건 확인
-
 
         match st.session_state["status"]:
             case "STEP1":
@@ -253,12 +258,12 @@ class StreamlitChatService:
                 # st.rerun()
                 # TODO: 확률에 기반해서 이벤트 발생
             case "STEP3":
-                col1, col2 = st.columns([0.85, 0.15])
+                col1, col2 = st.columns([0.75, 0.25])
                 button_flag = False
                 with col1:
                     st.chat_input("Say something", disabled=True, key=self._session_id)
                 with col2:
-                    if st.button('처음 스텝부터 다시 시작합니다.'):
+                    if st.button('다음 투자 라운드를 진행합니다.'):
                         button_flag = True
                 if button_flag:
                     self.step3_full_step_done()

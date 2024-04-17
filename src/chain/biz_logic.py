@@ -48,6 +48,21 @@ def search_stock(
     return response
 
 
+@ai_error_capture
+def summary_background(
+        background: str
+):
+    prompt = ChatPromptTemplate.from_template(
+        "Please summarize this Background in one paragraph write in korean.\n ### Background: {background}\n### Summarized Background:"
+    )
+    llm = get_azure_gpt_chat_llm(model_version=MODEL_VERSION, is_stream=True)
+
+    chain = (
+            prompt | llm
+    )
+    response = chain.invoke({"background": background})
+    return response
+
 # @ai_error_capture
 # def update_story(time: str, background: str, callbacks: List[BaseCallbackHandler] = []):
 #     """
