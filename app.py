@@ -57,7 +57,7 @@ def streamlit_init():
     col1, col2 = st.columns([0.35, 0.65])
     with col1:
         with st.container(height=220):
-            st.subheader("진행상황")
+            st.markdown("##### 진행상황")
             st.write(f'흐른시간: {st.session_state["system_time"]}개월')
 
             step = get_step_for_step_progress(st.session_state["status"])
@@ -83,7 +83,7 @@ def streamlit_init():
             )
 
         with st.container(height=330):
-            st.subheader("유저 액션")
+            st.markdown("##### 유저 액션")
 
             st.write("2단계에 수행하는 작업입니다. 스킵할 시간을 정하고, 포트폴리오의 비율 총합을 100으로 설정해주세요.")
             option = st.selectbox(
@@ -97,17 +97,17 @@ def streamlit_init():
             st.session_state["portfolio_df"] = st.data_editor(portfolio_df)
 
         with st.container(height=310):
-            st.subheader("주식가격 히스토리")
+            st.markdown("##### 주식가격 히스토리")
             stock_price_df = get_data_frame_by_system_price()
             st.dataframe(stock_price_df)
 
         with st.container(height=500):
-            st.subheader("배경설명 히스토리")
+            st.markdown("##### 배경설명 히스토리")
             for background_content in st.session_state["background_history"]:
                 st.write(background_content + "\n\n------------------------------------\n\n")
 
         with st.container(height=500):
-            st.subheader("조사 결과 히스토리")
+            st.markdown("##### 조사 결과 히스토리")
             for stock_search_content in st.session_state["stock_search_history"]:
                 st.write(stock_search_content + "\n\n------------------------------------\n\n")
 
@@ -120,10 +120,12 @@ def streamlit_init():
 
         with st.container(height=500):
             st.subheader("대화 히스토리")
-            # NOTE 임의로 세션 ID 생성(서버측으로 전송은 하고 있지 않음)
-            # with st.chat_message("ai"):
-            #     st.markdown(get_game_story())
-            # st.session_state['service'].get_user_input()
+            for message in st.session_state["messages"]:
+                print("MESSAGE:", message)
+                # if not message['content']:
+                #     break
+                with st.chat_message(message["role"]):
+                    st.markdown(message["content"])
 
 
 if __name__ == "__main__":
