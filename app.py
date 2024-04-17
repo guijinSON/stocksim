@@ -42,8 +42,8 @@ def streamlit_init():
         st.session_state["stock_info"] = 0  # 유저 포트폴리오 정보
         st.session_state["stock_info_df"] = 0  # 유저 포트폴리오 정보
         st.session_state["status"] = "STEP1"
-        st.session_state["prices"] = [300000, 700000, 40000]
-        st.session_state["portfolio_df_data"] = [0, 0, 0]  # 초기 유저 포트폴리오
+        st.session_state["prices"] = [310000, 730000, 440000, 520000, 420000]
+        st.session_state["portfolio_df_data"] = [0, 0, 0, 0, 0]  # 초기 유저 포트폴리오
         st.session_state["portfolio_df"] = None  # 초기 유저 포트폴리오
         st.session_state["stock_price_df_data"] = {
             'date_times': [],
@@ -91,10 +91,10 @@ def streamlit_init():
                     hide_index=True,
                 )
 
-        with st.container(height=300):
+        with st.container(height=330):
             st.subheader("유저 액션")
 
-            st.write("2단계에 수행하세요.")
+            st.write("2단계에 수행하는 작업입니다. 스킵할 시간을 정하고, 포트폴리오의 비율 총합을 100으로 설정해주세요.")
             option = st.selectbox(
                 "스킵할 시간을 선택하세요.",
                 ("1Month", "6Month", "1Year", "3Years"),
@@ -105,9 +105,8 @@ def streamlit_init():
             portfolio_df = get_data_frame_by_user_portfolio()
             st.session_state["portfolio_df"] = st.data_editor(portfolio_df)
 
-        with st.container(height=350):
-            st.subheader("주식 가격 히스토리")
-            # new_date = pd.to_datetime(START_SYSTEM_TIME) + pd.DateOffset(months=st.session_state["system_time"])
+        with st.container(height=310):
+            st.subheader("주식가격 히스토리")
             stock_price_df = get_data_frame_by_system_price()
             st.dataframe(stock_price_df)
 

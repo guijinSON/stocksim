@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 
 START_SYSTEM_TIME = '2030-09-26'
-STOCK_NAMES = ["삼성전자", "네이버", "카카오"]
+STOCK_NAMES = ["SK하이닉스", "네이버", "카카오", "셀바스AI", "한글과컴퓨터"]
 
 
 def get_step_for_step_progress(step: str):

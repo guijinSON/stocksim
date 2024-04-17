@@ -158,13 +158,14 @@ class StreamlitChatService:
         st.session_state["stock_price_history"].append(new_stock_price)
         self.write_logs(f"STEP2-3: 가격 갱신. new_stock_price:", st.session_state["stock_price_history"][-1])
 
-        new_date = (pd.to_datetime(START_SYSTEM_TIME) + pd.DateOffset(months=st.session_state["system_time"])).strftime('%Y-%m-%d')
+        new_date = (pd.to_datetime(START_SYSTEM_TIME) + pd.DateOffset(months=st.session_state["system_time"])).strftime(
+            '%Y-%m-%d')
         # TODO: 가격 변경하기 -> st.session_state["prices"]
         set_data_frame_by_system_price(new_date, STOCK_NAMES, st.session_state["prices"])
 
         st.session_state["status"] = "STEP3"
 
-    def step3_update_new_story(self, message_content: str):
+    def step3_full_step_done(self, message_content: str):
         if message_content == "계속 진행하겠습니다.":
             with st.chat_message("ai"):
                 st.markdown("단계가 마무리 되었습니다. '계속 진행하겠습니다.'를 입력해주세요.")
@@ -189,7 +190,7 @@ class StreamlitChatService:
                     # with st.spinner('Wait for it...'):
                     #     time.sleep(5)
                 case "STEP3":
-                    self.step3_update_new_story(message_content=message)
+                    self.step3_full_step_done(message_content=message)
         # for message in st.session_state["messages"]:
         #     with st.chat_message(message["role"]):
         #         st.markdown(message["content"])
