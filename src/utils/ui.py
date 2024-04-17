@@ -31,14 +31,6 @@ def get_now_time_by_user_input_time(now: int, user_input_time: str):
     return now
 
 
-def set_data_frame_by_system_price(new_date_time: str, stock_names: List[str], new_prices: List[int]):
-    data = st.session_state["stock_price_df_data"]
-    data['date_times'] += [new_date_time for _ in range(len(stock_names))]
-    data['stocks'] += stock_names
-    data['prices'] += new_prices
-    st.session_state["stock_price_df_data"] = data
-
-
 def get_data_frame_by_system_price():
     data = st.session_state["stock_price_df_data"]
     # 데이터 프레임 생성
@@ -51,14 +43,37 @@ def get_data_frame_by_system_price():
     return pivot_df
 
 
+def set_data_frame_by_system_price(new_date_time: str, stock_names: List[str], new_prices: List[int]):
+    data = st.session_state["stock_price_df_data"]
+    data['date_times'] += [new_date_time for _ in range(len(stock_names))]
+    data['stocks'] += stock_names
+    data['prices'] += new_prices
+    st.session_state["stock_price_df_data"] = data
+
+
 def get_data_frame_by_user_portfolio():
     stocks = STOCK_NAMES
-    portfolio_df = pd.DataFrame(data=[st.session_state["portfolio_df_data"]], columns=stocks)
+    portfolio_df = pd.DataFrame(data=[st.session_state["portfolio_ratio_list"]], columns=stocks)
     return portfolio_df.reset_index(drop=True)
 
-def get_portfolio_df_data():
+
+def set_portfolio_df_data():
     portfolio_editable_df = st.session_state["portfolio_df"]
-    result = [{"종목": column, "비율": int(portfolio_editable_df[column].values[0])} for column in
-              portfolio_editable_df.columns]
-    st.session_state["portfolio_df_data"] = portfolio_editable_df.iloc[0].tolist()
+    tmp_result = [{"종목": column, "비율": int(portfolio_editable_df[column].values[0])} for column in
+                  portfolio_editable_df.columns]
+    st.session_state["portfolio_ratio_list"] = portfolio_editable_df.iloc[0].tolist()
+
+    result = {}
+    for tmp in tmp_result:
+        result[tmp["종목"]] = tmp["비율"]
     return result
+
+
+def set_balloons(count: int = 0):
+    for i in range(count):
+        st.balloons()
+
+
+def set_snow(count: int = 0):
+    for i in range(count):
+        st.snow()

@@ -8,11 +8,12 @@ from src.chain import biz_logic
 import streamlit as st
 from langchain_core.callbacks import BaseCallbackHandler
 
-from src.chain.biz_logic import summary_background
+from src.chain.biz_logic import summary_background, ending_story
 from src.config import settings
+from src.utils.calculate import calculate_new_price, calculate_roi, get_stock_price_dict_by_two_list
 from src.utils.event import generate_env_event, generate_stock_event
-from src.utils.ui import get_now_time_by_user_input_time, START_SYSTEM_TIME, STOCK_NAMES, \
-    set_data_frame_by_system_price, get_portfolio_df_data
+from src.utils.ui import get_now_time_by_user_input_time, START_SYSTEM_TIME, STOCK_NAMES, set_portfolio_df_data, \
+    set_data_frame_by_system_price
 
 
 def get_game_story():
@@ -35,7 +36,7 @@ def get_game_story():
         3. 조사된 내용을 바탕으로 왼쪽의 유저액션에서 자신만의 포트폴리오를 구성하세요. 이 과정에는 게임 내에서 시간을 얼마나 진행할지 결정하는 것도 함께 포함됩니다(1Month, 6Month, 1Year, 3Year).
         4. 여러분이 선택한 종목과 시간 경과에 따라, 인공지능 모델이 새로운 시나리오를 생성하고 그에 따른 주가를 조정할 것입니다.
         5. 2~4단계를 게임 내 시간으로 10년이 될 때까지 반복 플레이 해주세요.
-        6. 10년 동안 여러분의 포트폴리오 가치를 최대한 높이는 것이 목표입니다. 현명한 투자 결정과 리스크 관리가 게임 성공의 열쇠가 될 것입니다 :)
+        6. 5년 동안 여러분의 포트폴리오 가치를 최대한 높이는 것이 목표입니다. 현명한 투자 결정과 리스크 관리가 게임 성공의 열쇠가 될 것입니다 :)
         
         ---
         
@@ -78,47 +79,12 @@ class OpenAIChatMessageCallbackHandler(BaseCallbackHandler):
         #     with st.spinner('주식 가격을 변경중입니다...'):
         #         time.sleep(5)
 
-        if st.button('확인'):
+        if st.button('모두 읽었습니다.'):
             st.write("다음 단계로 넘어갑니다.")
 
     def on_llm_new_token(self, token, *args, **kwargs):
         self.message += token
         self.message_box.markdown(self.message)
-
-
-def calculate_new_price(time: int, current_price: List[int], background: str):
-    import torch
-    import numpy as np
-    from transformers import AutoModelForSequenceClassification, AutoTokenizer
-    import torch.nn.functional as F
-    import random
-
-    tokenizer = AutoTokenizer.from_pretrained("amphora/KorFinASC-XLM-RoBERTa")
-    model = AutoModelForSequenceClassification.from_pretrained("amphora/KorFinASC-XLM-RoBERTa")
-    imap = {0: 1, 1: -1, 2: 0}
-
-    text = "3년이 지난 후, 삼성전자는 프로메테우스를 스마트폰, 스마트 TV 등 소비자 가전 제품에 더욱 발전시켜 사용자 경험을 차별화하고, 스마트 팩토리와 스마트 시티 분야에서도 혁신을 이끌고 있습니다. 이로써 삼성전자는 글로벌 시장에서의 경쟁력을 더욱 강화하고 있습니다. SK하이닉스는 AI 옵티마이저 프로젝트를 통해 AGI 기술 개발에 집중하고 있으며, 프로메테우스의 발전을 지켜보며 상호 협력 가능성을 모색하고 있습니다. 또한, 네이버는 하이퍼클로바 X를 개발하여 사용자 경험을 혁신하고 B2B 시장 공략을 가속화하며 글로벌 시장에 진출하기 위한 계획을 세우고 있습니다. 카카오는 AI 기술 개발을 강화하기 위해 공격적인 AI 투자와 인수합병을 통해 기술력과 인재 풀을 강화하고 있습니다. 마지막으로, 한글과컴퓨터는 오피스 소프트웨어 시장에서의 변화에 대응하기 위해 전략을 재조정하고, AI 기능을 플러그인으로 개발하여 개방형 플랫폼으로 전환하고자 노력하고 있습니다. 이러한 기업들의 노력으로 AI 기술은 더욱 발전하고 혁신적인 서비스를 제공하며, 글로벌 시장에서의 경쟁력을 강화하고 있습니다. 세계는 더욱 스마트하고 혁신적인 기술로 가득한 새로운 시대로 접어들고 있습니다. 이제는 인류가 더욱 발전된 기술을 통해 더욱 편리하고 혁신적인 삶을 즐길 수 있는 시대가 열릴 것입니다."
-
-    # price = {"삼성전자": 351100, "SK 하이닉스": 523000, "네이버": 302400, "셀바스AI": 12800, "카카오": 187100, "한글과 컴퓨터": 82900}
-    price_dict = {}
-    for idx, stock in enumerate(STOCK_NAMES):
-        price_dict[stock] = current_price[idx]
-
-    new_price_list = []
-    for k, v in price_dict.items():
-        input_str = f"{background}</s> {k}"
-
-        with torch.no_grad():
-            input = tokenizer(input_str, return_tensors='pt')
-            output = model(**input)
-
-            logits = F.softmax(output.logits[0], dim=-1).numpy()
-            idx = np.argmax(logits)
-            new_price = round(
-                price_dict[k] + (imap[idx] * logits[idx] * 10000 * time) + price_dict[k] * random.uniform(-0.03, 0.03))
-            new_price_list.append(new_price)
-
-    return new_price_list
 
 
 class StreamlitChatService:
@@ -168,16 +134,17 @@ class StreamlitChatService:
             st.session_state["status"] = "STEP1"
 
     def step2_update_new_story(self):
-        portfolio_dict_data = get_portfolio_df_data()
         # NOTE: 포트폴리오 확인
-        print("포트폴리오 내용:", portfolio_dict_data)
-        if sum(st.session_state["portfolio_df_data"]) != 100:
+        portfolio_data_dict = set_portfolio_df_data()
+        portfolio_ratio_list = st.session_state["portfolio_ratio_list"]
+        print("포트폴리오 dictionary 내용:", portfolio_data_dict, ", 포트폴리오 비율:", portfolio_ratio_list)
+        if sum(portfolio_ratio_list) != 100:
             with st.chat_message("ai"):
                 st.markdown("각각의 포트폴리오 비율의 합은 100이 되어야 합니다.")
             return
 
         # NOTE: 주식 금액 확인
-        stock_prices_for_prompt = list(zip(STOCK_NAMES, st.session_state["portfolio_df_data"]))
+        stock_prices_for_prompt = list(zip(STOCK_NAMES, portfolio_ratio_list))
         with st.chat_message("ai"):
             st.markdown(f'선택하신 스킵 시간은 {st.session_state["user_input_time"]}, 포트폴리오는 {stock_prices_for_prompt}입니다.')
 
@@ -185,10 +152,7 @@ class StreamlitChatService:
         st.session_state["system_time"] = get_now_time_by_user_input_time(st.session_state["system_time"],
                                                                           st.session_state["user_input_time"])
 
-        print(f"추가되는 search history: {st.session_state['stock_search_history']}")
-
-
-        envi_event = generate_env_event()
+        envi_event = generate_env_event() if generate_env_event() != "" else "없음"
         stock_event = generate_stock_event(STOCK_NAMES)
         with st.chat_message("ai"):
             st.warning(f'예상치 못한 사건이 발생했습니다. 사회적/환경적 사건: {envi_event}, 주식 관련 사건: {stock_event}', icon="⚠️")
@@ -210,7 +174,8 @@ class StreamlitChatService:
         # NOTE: 변경된 배경 상황에 따라 주식 가격 업데이트 하기
         summarized_background = summary_background(background=st.session_state["background_history"][-1])
         print("BACKGROUND SUMMARY:", summarized_background)
-        new_stock_price = calculate_new_price(st.session_state["system_time"], st.session_state["prices"], background=summarized_background)
+        new_stock_price = calculate_new_price(STOCK_NAMES, st.session_state["system_time"], st.session_state["prices"],
+                                              background=summarized_background)
         st.session_state["prices"] = new_stock_price
         st.session_state["stock_price_history"].append(new_stock_price)
         self.write_logs(f"STEP2-2 [AI MODEL]: 가격 갱신. new_stock_price:",
@@ -222,28 +187,46 @@ class StreamlitChatService:
                 pd.to_datetime(START_SYSTEM_TIME) + pd.DateOffset(months=st.session_state["system_time"])
         ).strftime('%Y-%m-%d')
         set_data_frame_by_system_price(new_date, STOCK_NAMES, st.session_state["prices"])
+
+        if len(st.session_state["stock_price_history"]) >= 2:
+            total_investment: int = st.session_state["total_investment"]
+            roi = calculate_roi(
+                portfolio_ratio_list,
+                st.session_state["stock_price_history"][-2],
+                st.session_state["stock_price_history"][-1],
+            )
+            st.session_state["roi_history"].append(round(roi, 2))
+            st.session_state["total_investment"] = int((total_investment * (1 + roi / 100)) // 100 * 100)
+
         st.session_state["status"] = "STEP3"
         print("RENEW PRICE:", new_stock_price)
 
     def step3_full_step_done(self):
-        with st.chat_message("ai"):
-            st.markdown("지금까지 수익률은 만족스러우신가요? 이번에는 더 면밀하게 주식을 살펴봅시다.")
-            if st.button('확인'):
-                st.write("다음 단계로 넘어갑니다.")
+        if st.session_state["system_time"] >= st.session_state["system_time_end"]:
+            roi = round((st.session_state["total_investment"] - st.session_state["init_investment"]) / st.session_state["init_investment"] * 100, 2)
+            st.session_state["final_roi"] = roi
+            st.session_state["ending_story"] = ending_story(
+                background=st.session_state["background_history"][-1], roi=roi
+            )
+            st.markdown("혼란스럽고 예측 불가능한 상황 속에서, 여러분은 슬기로운 투자자로서 주식 시장의 거친 파도를 헤쳐오느라 고생 많으셨습니다!")
+            if st.button('게임 종료하기'):
+                st.write("게임을 종료합니다.")
+        else:
+            with st.chat_message("ai"):
+                st.markdown("지금까지 수익률은 만족스러우신가요? 이번에는 더 면밀하게 주식을 살펴봅시다.")
+                if st.button('계속하기'):
+                    st.write("다음 단계로 넘어갑니다.")
         st.session_state["status"] = "STEP1"
 
     def get_user_input(self):
 
         self.write_logs(f'현재 스텝: {st.session_state["status"]}')
 
-        # TODO: 흐른 시간 확인 -> 게임 종료조건 확인
-
         match st.session_state["status"]:
             case "STEP1":
                 if message := st.chat_input("Say something", disabled=False, key=self._session_id):
                     append_user_message(message)
                     self.step1_check_stock_question(message_content=message)
-                # st.rerun()
             case "STEP2":
                 col1, col2 = st.columns([0.85, 0.15])
                 button_flag = False
@@ -255,8 +238,6 @@ class StreamlitChatService:
                 if button_flag:
                     self.step2_update_new_story()
 
-                # st.rerun()
-                # TODO: 확률에 기반해서 이벤트 발생
             case "STEP3":
                 col1, col2 = st.columns([0.75, 0.25])
                 button_flag = False
@@ -267,11 +248,6 @@ class StreamlitChatService:
                         button_flag = True
                 if button_flag:
                     self.step3_full_step_done()
-        # st.success('한 STEP이 끝났습니다.')
-        #         st.rerun()
-        # for message in st.session_state["messages"]:
-        #     with st.chat_message(message["role"]):
-        #         st.markdown(message["content"])
 
 
 # 메시지 저장(History 에 사용 가능)

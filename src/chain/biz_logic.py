@@ -63,6 +63,28 @@ def summary_background(
     response = chain.invoke({"background": background})
     return response
 
+@ai_error_capture
+def ending_story(
+        background: str,
+        roi: float  # Added ROI as a parameter
+):
+    # Updated the template with the new structure
+    prompt = ChatPromptTemplate.from_template(
+        " # Persona\n"
+        "You are a fictional story simulator and also a financial expert. At the end of the game, "
+        "you should craft a concluding message for the user. Based on the background and the return on investment ('수익률'), "
+        "summarize the background and write an encouraging message that will be memorable for the user. in korean\n"
+        "### Background: {background}\n"
+        "### Return on Investment: {roi}\n"
+        "### Concluding Message:"
+    )
+    llm = get_azure_gpt_chat_llm(model_version=MODEL_VERSION, is_stream=True)
+    chain = (
+            prompt | llm
+    )
+    response = chain.invoke({"background": background, "roi": roi})
+    return response.content
+
 # @ai_error_capture
 # def update_story(time: str, background: str, callbacks: List[BaseCallbackHandler] = []):
 #     """
