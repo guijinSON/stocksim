@@ -11,16 +11,17 @@ from src.parser.custom_output import custom_parser
 
 MODEL_VERSION = '35'
 
+
 def search_stock(
-    inputs: str, background: str, callbacks: List[BaseCallbackHandler] = []
+        inputs: str, background: str, callbacks: List[BaseCallbackHandler] = []
 ):
     prompt = load_prompt(PROMPT_DIR + "/search_stock.json")
     llm = get_azure_gpt_chat_llm(model_version=MODEL_VERSION, is_stream=True, callbacks=callbacks)
     chain = (
-        {"inputs": RunnablePassthrough(), "background": RunnablePassthrough()}
-        | prompt
-        | llm
-        | custom_parser
+            {"inputs": RunnablePassthrough(), "background": RunnablePassthrough()}
+            | prompt
+            | llm
+            | custom_parser
     )
     response = chain.invoke({"inputs": inputs, "background": background})
     return response
@@ -33,9 +34,9 @@ def update_story(time: str, background: str, callbacks: List[BaseCallbackHandler
     prompt = load_prompt(PROMPT_DIR + "/update_story.json")
     llm = get_azure_gpt_chat_llm(model_version=MODEL_VERSION, is_stream=True, callbacks=callbacks)
     chain = (
-        {"time": RunnablePassthrough(), "background": RunnablePassthrough()}
-        | prompt
-        | llm
+            {"time": RunnablePassthrough(), "background": RunnablePassthrough()}
+            | prompt
+            | llm
     )
     response = chain.invoke({"time": time, "background": background})
     return response.content
@@ -48,9 +49,9 @@ def update_background(background: str, new_plot: str):
     prompt = load_prompt(PROMPT_DIR + "/update_background.json")
     llm = get_azure_gpt_chat_llm(model_version=MODEL_VERSION, is_stream=True)
     chain = (
-        {"background": RunnablePassthrough(), "new_plot": RunnablePassthrough()}
-        | prompt
-        | llm
+            {"background": RunnablePassthrough(), "new_plot": RunnablePassthrough()}
+            | prompt
+            | llm
     )
     response = chain.invoke({"background": background, "new_plot": new_plot})
     return response.content
@@ -77,9 +78,9 @@ def search_stock_verified(inputs: str):
     ]
     llm = get_azure_gpt_chat_llm(model_version=MODEL_VERSION, is_stream=True)
     chain = (
-        {"inputs": RunnablePassthrough(), "examples": RunnablePassthrough()}
-        | prompt
-        | llm
+            {"inputs": RunnablePassthrough(), "examples": RunnablePassthrough()}
+            | prompt
+            | llm
     )
     response = chain.invoke({"inputs": inputs, "examples": examples})
 
@@ -93,14 +94,14 @@ def update_stock_price(background: str, new_plot: str, elapsed_time: str, price:
     prompt = load_prompt(PROMPT_DIR + "/update_stock_price.json")
     llm = get_azure_gpt_chat_llm(model_version=MODEL_VERSION, is_stream=True)
     chain = (
-        {
-            "background": RunnablePassthrough(),
-            "new_plot": RunnablePassthrough(),
-            "elapsed_time": RunnablePassthrough(),
-            "price": RunnablePassthrough(),
-        }
-        | prompt
-        | llm
+            {
+                "background": RunnablePassthrough(),
+                "new_plot": RunnablePassthrough(),
+                "elapsed_time": RunnablePassthrough(),
+                "price": RunnablePassthrough(),
+            }
+            | prompt
+            | llm
     )
     response = chain.invoke(
         {

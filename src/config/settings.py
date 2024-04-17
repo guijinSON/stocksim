@@ -7,6 +7,7 @@ ROOT_DIR = Path(CUR_DIR).parent.parent
 PROMPT_DIR = os.path.join(ROOT_DIR, "prompts")
 CONV_HISTORY_DIR = os.path.join(ROOT_DIR, "conv_history")
 OTHERS_DIR = os.path.join(ROOT_DIR, "others")
+LOGS_DIR = os.path.join(ROOT_DIR, "logs")
 
 
 def get_path_join(**args: str) -> LiteralString | str | bytes:

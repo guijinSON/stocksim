@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 
 from src.utils.chat import (
-    get_game_story, get_user_input, get_game_initial_background
+    get_game_story, get_game_initial_background, StreamlitChatService
 )
 from src.utils.ui import set_data_frame_by_system_price, START_SYSTEM_TIME, STOCK_NAMES, get_step_for_step_progress, \
     get_data_frame_by_user_portfolio, get_data_frame_by_system_price
@@ -17,9 +17,14 @@ def get_chat_history():
 
 
 def streamlit_init():
-    col1, col2 = st.columns([0.65, 0.35])
+
+    if 'session_key' not in st.session_state:
+        # 세션 키로 UUID 또는 현재 시각을 사용합니다.
+        st.session_state['session_key'] = str(uuid.uuid4())
+        st.session_state['service'] = StreamlitChatService(str(uuid.uuid4()))
 
     if "messages" not in st.session_state:
+        print("여기로 들어옴")
         st.session_state["messages"] = []
         st.session_state[
             "background"
@@ -41,16 +46,15 @@ def streamlit_init():
         }
         set_data_frame_by_system_price(START_SYSTEM_TIME, STOCK_NAMES, st.session_state["prices"])
 
-    count_for_key = 0
+
+    # TODO 신규 사용자라면 새로 생성해주고, 기존 사용자라면 입력받고 Chat history 불러올 수 있도록 구현해야
+    col1, col2 = st.columns([0.65, 0.35])
     with col1:
         with st.container(height=1000):
             # NOTE 임의로 세션 ID 생성(서버측으로 전송은 하고 있지 않음)
-            # TODO 신규 사용자라면 새로 생성해주고, 기존 사용자라면 입력받고 Chat history 불러올 수 있도록 구현해야
-            session_id = uuid.uuid4()
-            st.write(f"게임ID: {session_id}")
             with st.chat_message("ai"):
                 st.markdown(get_game_story())
-            get_user_input(count_for_key=count_for_key + 1)
+            st.session_state['service'].get_user_input()
 
     with col2:
         on = st.toggle(label="진행상황 보기")

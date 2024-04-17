@@ -1,9 +1,13 @@
+from typing import Optional
+
 import pandas as pd
 
+from repositories.file_repository import FileRepository
 from src.chain.biz_logic import search_stock_verified, update_story, update_stock_price, update_background, search_stock
 import streamlit as st
 from langchain_core.callbacks import BaseCallbackHandler
 
+from src.config import settings
 from src.utils.ui import get_now_time_by_user_input_time, START_SYSTEM_TIME, STOCK_NAMES, set_data_frame_by_system_price
 
 
@@ -29,9 +33,7 @@ def get_game_story():
         5. 2~4단계를 게임 내 시간으로 10년이 될 때까지 반복하세요.
         6. 10년 동안 여러분의 포트폴리오 가치를 최대한 높이는 것이 목표입니다. 현명한 투자 결정과 리스크 관리가 성공의 열쇠가 될 것입니다.
         
-        
         ---
-        
         
         그럼 이제 게임을 시작하겠습니다. 검색하고 싶은 주식을 설명해주세요. 
         매 턴마다 주식 조사는 한번만 가능하니 신중하게 해야합니다. (ex. PROMETHEUS 의 경쟁사를 개발 중인 회사는 뭐가 있어?, PROMETHEUS 개발 참여 기업, 등)
@@ -56,6 +58,7 @@ def get_game_initial_background():
         """
     )
 
+
 class OpenAIChatMessageCallbackHandler(BaseCallbackHandler):
     message = ""
     message_box = None
@@ -65,12 +68,103 @@ class OpenAIChatMessageCallbackHandler(BaseCallbackHandler):
         # self.message_box = st.chat_message("ai")
 
     def on_llm_end(self, *args, **kwargs):
-        # append_ai_message(self.message)
-        pass
+        append_ai_message(self.message)
 
     def on_llm_new_token(self, token, *args, **kwargs):
         self.message += token
         self.message_box.markdown(self.message)
+
+
+class StreamlitChatService:
+    def __init__(self, session_id):
+        self._session_id = session_id
+        self._file_repo = FileRepository(settings.LOGS_DIR)
+        self._file_name = f"{self._session_id}.logs"
+        print("서비스 생성")
+
+    def check_is_stock_verified_question(self, message_content: str):
+        message = search_stock_verified(message_content)
+        return message.content == "[YES]"
+
+    def write_logs(self, log_content: str, ai_response: Optional[str] = None):
+        print(log_content)
+        self._file_repo.create_or_append_file(self._file_name, log_content)
+        if ai_response:
+            self._file_repo.create_or_append_file(self._file_name, f'"""\n{ai_response}\n"""')
+
+    def step1_check_stock_question(self, message_content: str):
+        self.write_logs(f"STEP1: 주식관련 질문이 입력되었는지 확인합니다.")
+        # 명령어 작성 및 명령어에 따른 동작 설정 가능
+        is_stock_verified_question = self.check_is_stock_verified_question(message_content)
+        if is_stock_verified_question:
+            response = search_stock(inputs=message_content, background=st.session_state["background"],
+                                    callbacks=[OpenAIChatMessageCallbackHandler()])
+            self.write_logs(f"STEP1: 주식관련 질문이 입력되었습니다. 조사결과:", response)
+            st.session_state["status"] = "STEP2"
+
+        else:
+            self.write_logs(f"STEP1: 주식관련 질문이 입력되지 않아, 다시 요청합니다.")
+            with st.chat_message("ai"):
+                st.markdown("주식관련 질문으로 먼저 정보를 얻어보세요. 주식 관련 질문은 한 턴에 한 번 밖에 할 수 없으므로 신중하게 하셔야합니다.")
+            st.session_state["status"] = "STEP1"
+
+    def step2_update_new_story(self, message_content: str):
+        if message_content != "확인했습니다.":
+            with st.chat_message("ai"):
+                st.markdown("유저 액션에서 스킵할 시간과 포트폴리오를 조정한 후, '확인했습니다.'를 입력해주세요.")
+            return
+
+        stock_prices = st.session_state["stock_price_df_data"]['prices']
+        stock_prices_for_prompt = list(zip(STOCK_NAMES, stock_prices))
+        with st.chat_message("ai"):
+            st.markdown(f'선택하신 시간은 {st.session_state["user_input_time"]}, 가격은 {stock_prices_for_prompt}입니다.')
+
+        new_plot = update_story(
+            time=st.session_state["user_input_time"],
+            background=st.session_state["background"],
+            callbacks=[OpenAIChatMessageCallbackHandler()],
+        )
+        self.write_logs(f"STEP2-1: plot 갱신. new_plot:", new_plot)
+        new_background = update_background(
+            background=st.session_state["background"], new_plot=new_plot
+        )
+        self.write_logs(f"STEP2-2: background 갱신. new_background:",  new_background)
+        st.session_state["system_time"] = get_now_time_by_user_input_time(st.session_state["system_time"],
+                                                                          st.session_state["user_input_time"])
+
+        # new_stock_price = update_stock_price(
+        #     background=st.session_state["background"],
+        #     new_plot=new_plot,
+        #     elapsed_time=st.session_state["user_input_time"],
+        #     price=str(stock_prices),
+        # )
+        # print(f"STEP2-3-2: price 갱신 후.")
+        #
+        # new_date = (pd.to_datetime(START_SYSTEM_TIME) + pd.DateOffset(months=5)).strftime('%Y-%m-%d')
+        # set_data_frame_by_system_price(new_date, STOCK_NAMES, st.session_state["prices"])
+
+        st.session_state["background"] = new_background
+        st.session_state["status"] = "STEP3"
+
+
+    def get_user_input(self):
+        message = st.chat_input("Say something", disabled=False, key=self._session_id)
+        self.write_logs(f'현재 스텝: {st.session_state["status"]}')
+        if message:
+            match st.session_state["status"]:
+                case "STEP1":
+                    self.step1_check_stock_question(message_content=message)
+                    # with st.spinner('Wait for it...'):
+                    #     time.sleep(3)
+                case "STEP2":
+                    self.step2_update_new_story(message_content=message)
+                    # with st.spinner('Wait for it...'):
+                    #     time.sleep(3)
+            if message == "배경":
+                st.write(st.session_state["background"])
+        # for message in st.session_state["messages"]:
+        #     with st.chat_message(message["role"]):
+        #         st.markdown(message["content"])
 
 
 # 메시지 저장(History 에 사용 가능)
@@ -90,99 +184,3 @@ def append_user_message(content: str):
             "role": "human",
         }
     )
-
-
-def check_is_stock_verified_question(message_content: str):
-    message = search_stock_verified(message_content)
-    return message.content == "[YES]"
-
-
-def step1_check_stock_question(message_content: str):
-    print(f"STEP1: 주식관련 질문이 입력되었는지 확인합니다. user 메시지: {message_content}")
-    append_user_message(message_content)
-    # 명령어 작성 및 명령어에 따른 동작 설정 가능
-    is_stock_verified_question = check_is_stock_verified_question(message_content)
-    if is_stock_verified_question:
-        response = search_stock(inputs=message_content, background=st.session_state["background"],
-                                callbacks=[OpenAIChatMessageCallbackHandler()])
-        append_ai_message(response)
-        # append_ai_message("유저 액션에서 스킵할 시간과 포트폴리오를 조정한 후, '확인했습니다.'를 입력해주세요.")
-        st.session_state["status"] = "STEP2"
-
-    else:
-        append_ai_message("주식관련 질문으로 먼저 정보를 얻어보세요.")
-        st.session_state["status"] = "STEP1"
-
-
-def step2_update_new_story(message_content: str):
-    if message_content != "확인했습니다.":
-        append_ai_message("유저 액션에서 스킵할 시간과 포트폴리오를 조정한 후, '확인했습니다.'를 입력해주세요.")
-        return
-
-    stock_prices = st.session_state["stock_price_df_data"]['prices']
-    stock_prices_for_prompt = list(zip(STOCK_NAMES, stock_prices))
-    with st.chat_message("ai"):
-        st.markdown(f'선택하신 시간은 {st.session_state["user_input_time"]}, 가격은 {stock_prices_for_prompt}입니다.')
-
-    new_plot = update_story(
-        time=st.session_state["user_input_time"],
-        background=st.session_state["background"],
-        callbacks=[OpenAIChatMessageCallbackHandler()],
-    )
-    print(f"STEP2-1: plot 갱신. 새로운 plot: {new_plot}")
-    new_background = update_background(
-        background=st.session_state["background"], new_plot=new_plot
-    )
-    print(f"STEP2-2: background 갱신. 새로운 background: {new_background}")
-    st.session_state["system_time"] = get_now_time_by_user_input_time(st.session_state["system_time"],
-                                                                      st.session_state["user_input_time"])
-
-    new_stock_price = update_stock_price(
-        background=st.session_state["background"],
-        new_plot=new_plot,
-        elapsed_time=st.session_state["user_input_time"],
-        price=str(stock_prices),
-    )
-    print(f"STEP2-3-2: price 갱신 후. 새로운 price: {new_stock_price}")
-
-    new_date = (pd.to_datetime(START_SYSTEM_TIME) + pd.DateOffset(months=5)).strftime('%Y-%m-%d')
-    set_data_frame_by_system_price(new_date, STOCK_NAMES, st.session_state["prices"])
-
-    st.session_state["background"] = new_background
-    st.session_state["status"] = "STEP3"
-    return new_stock_price
-
-
-def get_user_input(count_for_key):
-    message = st.chat_input("Say something", disabled=False, key=count_for_key)
-    print(f'현재 스텝: {st.session_state["status"]}')
-    if message:
-        match st.session_state["status"]:
-            case "STEP1":
-                step1_check_stock_question(message_content=message)
-                # with st.spinner('Wait for it...'):
-                #     time.sleep(3)
-            case "STEP2":
-                step2_update_new_story(message_content=message)
-                # with st.spinner('Wait for it...'):
-                #     time.sleep(3)
-        if message == "배경":
-            st.write(st.session_state["background"])
-        # st.success('Done!')
-        # print(f'현재 스텝: {st.session_state["status"]}')
-        # status = game_controller(message)
-        # st.session_state["status"] = status
-        # if st.session_state["status"] == "STEP2":
-        #     step_update_story()
-        # if st.session_state["status"] == "STEP3":
-        #     update_stock_price(
-        #         background=st.session_state["background"],
-        #         new_plot=new_plot,
-        #         elapsed_time=st.session_state["user_input_time"],
-        #         price=st.session_state["stock_info_df"][
-        #             ["command", "price"]
-        #         ].to_dict(),
-        #     )
-    for message in st.session_state["messages"]:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
