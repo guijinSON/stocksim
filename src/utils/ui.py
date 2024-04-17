@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 
 START_SYSTEM_TIME = '2030-09-26'
-STOCK_NAMES = ["SK하이닉스", "네이버", "카카오", "셀바스AI", "한글과컴퓨터"]
+STOCK_NAMES = ["삼성전자", "SK하이닉스", "네이버", "카카오", "셀바스AI", "한글과컴퓨터"]
 
 
 def get_step_for_step_progress(step: str):
@@ -33,7 +33,6 @@ def get_now_time_by_user_input_time(now: int, user_input_time: str):
 
 def set_data_frame_by_system_price(new_date_time: str, stock_names: List[str], new_prices: List[int]):
     data = st.session_state["stock_price_df_data"]
-    print("입력받은 요소:", new_date_time, stock_names, new_prices)
     data['date_times'] += [new_date_time for _ in range(len(stock_names))]
     data['stocks'] += stock_names
     data['prices'] += new_prices

@@ -42,8 +42,8 @@ def streamlit_init():
         st.session_state["stock_info"] = 0  # 유저 포트폴리오 정보
         st.session_state["stock_info_df"] = 0  # 유저 포트폴리오 정보
         st.session_state["status"] = "STEP1"
-        st.session_state["prices"] = [310000, 730000, 440000, 520000, 420000]
-        st.session_state["portfolio_df_data"] = [0, 0, 0, 0, 0]  # 초기 유저 포트폴리오
+        st.session_state["prices"] = [351100, 523000, 302400, 12800, 187100, 82900]
+        st.session_state["portfolio_df_data"] = [0, 0, 0, 0, 0, 0]  # 초기 유저 포트폴리오
         st.session_state["portfolio_df"] = None  # 초기 유저 포트폴리오
         st.session_state["stock_price_df_data"] = {
             'date_times': [],
@@ -118,6 +118,12 @@ def streamlit_init():
                 st.markdown(get_game_story())
             st.session_state['service'].get_user_input()
 
+        with st.container(height=500):
+            st.subheader("대화 히스토리")
+            # NOTE 임의로 세션 ID 생성(서버측으로 전송은 하고 있지 않음)
+            # with st.chat_message("ai"):
+            #     st.markdown(get_game_story())
+            # st.session_state['service'].get_user_input()
 
 
 if __name__ == "__main__":

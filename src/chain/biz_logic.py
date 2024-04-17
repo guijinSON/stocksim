@@ -138,3 +138,6 @@ def update_stock_price(background: str, new_plot: str, elapsed_time: str, price:
     )
 
     return response.content
+
+if __name__ == "__main__":
+    print(update_stock_price("hihi", "hihi", "1Month", [30000, 40000, 60000]))
