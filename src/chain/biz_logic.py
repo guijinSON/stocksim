@@ -28,15 +28,8 @@ def ai_error_capture(func, max_retries=5, delay_seconds=1):
                 else:
                     print(f"Retrying... (Attempt {attempts + 1}/{max_retries})")
                     time.sleep(delay_seconds)  # 재시도 사이에 일정 시간 대기
-    return wrapper
 
-# def ai_error_capture(func):
-#     def wrapper(*args, **kwargs):
-#         print("Code before function execution")
-#         result = func(*args, **kwargs)
-#         print("Code after function execution")
-#         return result
-#     return wrapper
+    return wrapper
 
 
 @ai_error_capture

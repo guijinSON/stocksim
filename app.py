@@ -54,42 +54,33 @@ def streamlit_init():
 
 
     # TODO 신규 사용자라면 새로 생성해주고, 기존 사용자라면 입력받고 Chat history 불러올 수 있도록 구현해야
-    col1, col2 = st.columns([0.65, 0.35])
+    col1, col2 = st.columns([0.35, 0.65])
     with col1:
-        with st.container(height=1000):
-            # NOTE 임의로 세션 ID 생성(서버측으로 전송은 하고 있지 않음)
-            with st.chat_message("ai"):
-                st.markdown(get_game_story())
-            st.session_state['service'].get_user_input()
+        with st.container(height=220):
+            st.subheader("진행상황")
+            st.write(f'흐른시간: {st.session_state["system_time"]}개월')
 
-    with col2:
-        on = st.toggle(label="진행상황 보기")
-        if on:
-            with st.container(height=220):
-                st.subheader("진행상황")
-                st.write(f'흐른시간: {st.session_state["system_time"]}개월')
+            step = get_step_for_step_progress(st.session_state["status"])
+            data_df = pd.DataFrame(
+                {
+                    "step": [step],
+                }
+            )
 
-                step = get_step_for_step_progress(st.session_state["status"])
-                data_df = pd.DataFrame(
-                    {
-                        "step": [step],
-                    }
-                )
-
-                st.data_editor(
-                    data_df,
-                    column_config={
-                        "step": st.column_config.ProgressColumn(
-                            "현재 진행중인 단계",
-                            width="large",
-                            help="The sales volume in USD",
-                            format="%f단계",
-                            min_value=0,
-                            max_value=4,
-                        ),
-                    },
-                    hide_index=True,
-                )
+            st.data_editor(
+                data_df,
+                column_config={
+                    "step": st.column_config.ProgressColumn(
+                        "현재 진행중인 단계",
+                        width="large",
+                        help="The sales volume in USD",
+                        format="%f단계",
+                        min_value=0,
+                        max_value=4,
+                    ),
+                },
+                hide_index=True,
+            )
 
         with st.container(height=330):
             st.subheader("유저 액션")
@@ -120,12 +111,13 @@ def streamlit_init():
             for stock_search_content in st.session_state["stock_search_history"]:
                 st.write(stock_search_content + "\n\n------------------------------------\n\n")
 
-    # NOTE: 사용자 액션이 일어나는 것을 캐치 -> 변화가 있으면 json에 저장하기
-    # NOTE: 수정 버튼 입력해서 그 버튼을 눌렀을 경우에만 해당 데이터를 파싱하는 방법으로 받아오기
+    with col2:
+        with st.container(height=1000):
+            # NOTE 임의로 세션 ID 생성(서버측으로 전송은 하고 있지 않음)
+            with st.chat_message("ai"):
+                st.markdown(get_game_story())
+            st.session_state['service'].get_user_input()
 
-    # print(option)
-    # dict_output = df.to_dict('records')
-    # print(dict_output)
 
 
 if __name__ == "__main__":

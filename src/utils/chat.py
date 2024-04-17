@@ -80,75 +80,84 @@ class OpenAIChatMessageCallbackHandler(BaseCallbackHandler):
 class StreamlitChatService:
     def __init__(self, session_id):
         self._session_id = session_id
-        self._file_repo = FileRepository(settings.LOGS_DIR)
-        self._file_name = f"{self._session_id}.logs"
-        print("서비스 생성")
+        self._file_repo = FileRepository(settings.LOGS_DIR + f"/{self._session_id}")
+        self._interaction_file_name = f"interaction.logs"
+        self._ai_response_file_name = f"model_response.logs"
 
     def check_is_stock_verified_question(self, message_content: str):
         message = biz_logic.search_stock_verified(message_content)
-        return message.content == "[YES]"
+        return message.content
 
-    def write_logs(self, log_content: str, ai_response: Optional[str] = None):
-        print(log_content)
-        self._file_repo.create_or_append_file(self._file_name, log_content)
+    def write_logs(self, log_content: str, user_message: str = "", ai_response: Optional[str] = None):
+        self._file_repo.create_or_append_file(self._interaction_file_name, log_content + f" {user_message}")
         if ai_response:
-            self._file_repo.create_or_append_file(self._file_name, f'"""\n{ai_response}\n"""')
+            self._file_repo.create_or_append_file(self._interaction_file_name, f'"""\n{ai_response}\n"""')
+            self._file_repo.create_or_append_file(self._ai_response_file_name, f'"""\n{ai_response}\n"""\n----------')
 
     def step1_check_stock_question(self, message_content: str):
-        self.write_logs(f"STEP1: 주식관련 질문이 입력되었는지 확인합니다.")
-        # 명령어 작성 및 명령어에 따른 동작 설정 가능
+        self.write_logs(f"STEP1 [USER]: 주식관련 질문이 입력되었는지 확인합니다.", user_message=message_content)
         is_stock_verified_question = self.check_is_stock_verified_question(message_content)
-        if is_stock_verified_question:
+
+        self.write_logs(f"STEP1 [AI]: 주식관련 질문 맞는지 확인합니다. 결과:", ai_response=is_stock_verified_question)
+        if is_stock_verified_question == "[YES]":
             with st.chat_message("ai"):
-                st.markdown("주식관련 질문을 해주셨군요!")
+                st.markdown("주식관련 질문을 해주셨군요! 제공되는 글을 확인하시고 오른쪽 유저 액션 창에서 스킵할 시간과 포트폴리오를 조정한 후, '계속 진행합니다.'를 입력해주세요.")
             response = biz_logic.search_stock(
                 inputs=message_content,
                 background=st.session_state["background_history"][-1],
                 callbacks=[OpenAIChatMessageCallbackHandler()]
             )
-            self.write_logs(f"STEP1: 주식관련 질문이 입력되었습니다. 조사결과:", response)
+            self.write_logs(f"STEP1 [AI]: 주식관련 질문이 입력되었습니다. 조사결과:", ai_response=response)
             st.session_state["stock_search_history"].append(response)
+            # NOTE: 다음 스텝으로 변경하기
             st.session_state["status"] = "STEP2"
-
         else:
-            self.write_logs(f"STEP1: 주식관련 질문이 입력되지 않아, 다시 요청합니다.")
+            self.write_logs(f"STEP1 [USER]: 주식관련 질문이 입력되지 않아, 다시 요청합니다.", user_message=message_content)
             with st.chat_message("ai"):
                 st.markdown("주식관련 질문으로 먼저 정보를 얻어보세요. 주식 관련 질문은 한 턴에 한 번 밖에 할 수 없으므로 신중하게 하셔야합니다.")
             st.session_state["status"] = "STEP1"
 
     def step2_update_new_story(self, message_content: str):
-        if message_content != "확인했습니다.":
+        self.write_logs(f"STEP2 [USER]: 유저의 질문:", user_message=message_content)
+        if message_content != "계속 진행합니다.":
             with st.chat_message("ai"):
-                st.markdown("유저 액션에서 스킵할 시간과 포트폴리오를 조정한 후, '확인했습니다.'를 입력해주세요.")
+                st.markdown("오른쪽 유저 액션 창에서 스킵할 시간과 포트폴리오를 조정한 후, '계속 진행합니다.'를 입력해주세요.")
             return
 
         portfolio_dict_data = get_portfolio_df_data()
+        # NOTE: 포트폴리오 확인
         if sum(st.session_state["portfolio_df_data"]) != 100:
             with st.chat_message("ai"):
                 st.markdown("각각의 포트폴리오 비율의 합은 100이 되어야 합니다.")
             return
 
+        # NOTE: 주식 금액 확인
         stock_prices = st.session_state["stock_price_df_data"]['prices']
         stock_prices_for_prompt = list(zip(STOCK_NAMES, st.session_state["portfolio_df_data"]))
         with st.chat_message("ai"):
             st.markdown(f'선택하신 스킵 시간은 {st.session_state["user_input_time"]}, 포트폴리오는 {stock_prices_for_prompt}입니다.')
 
+        # NOTE: 새로운 Plot 가져오기
         new_plot = biz_logic.update_story(
             time=st.session_state["user_input_time"],
             background=st.session_state["background_history"][-1],
             callbacks=[OpenAIChatMessageCallbackHandler()],
         )
         st.session_state["plot_history"].append(new_plot)
-        self.write_logs(f"STEP2-1: plot 갱신. new_plot:", st.session_state["plot_history"][-1])
+        self.write_logs(f"STEP2-1 [AI MODEL]: plot 갱신. new_plot:", ai_response=st.session_state["plot_history"][-1])
 
+        # NOTE: 새로운 Plot 기반으로 배경 설명 가져오기
         new_background = biz_logic.update_background(
             background=st.session_state["background_history"][-1], new_plot=st.session_state["plot_history"][-1]
         )
         st.session_state["background_history"].append(new_background)
-        self.write_logs(f"STEP2-2: background 갱신. new_background:", st.session_state["background_history"][-1])
+        self.write_logs(f"STEP2-2 [AI MODEL]: background 갱신. new_background:",
+                        ai_response=st.session_state["background_history"][-1])
 
+        # NOTE: 시간 조정하기 (유저가 스킵하고자하는 시간 설정)
         st.session_state["system_time"] = get_now_time_by_user_input_time(st.session_state["system_time"],
                                                                           st.session_state["user_input_time"])
+        # NOTE: 변경된 배경 상황에 따라 주식 가격 업데이트 하기
         new_stock_price = biz_logic.update_stock_price(
             background=st.session_state["background_history"][-1],
             new_plot=st.session_state["plot_history"][-1],
@@ -156,19 +165,24 @@ class StreamlitChatService:
             price=str(stock_prices),
         )
         st.session_state["stock_price_history"].append(new_stock_price)
-        self.write_logs(f"STEP2-3: 가격 갱신. new_stock_price:", st.session_state["stock_price_history"][-1])
-
-        new_date = (pd.to_datetime(START_SYSTEM_TIME) + pd.DateOffset(months=st.session_state["system_time"])).strftime(
-            '%Y-%m-%d')
-        # TODO: 가격 변경하기 -> st.session_state["prices"]
-        set_data_frame_by_system_price(new_date, STOCK_NAMES, st.session_state["prices"])
-
+        self.write_logs(f"STEP2-3 [AI MODEL]: 가격 갱신. new_stock_price:",
+                        ai_response=st.session_state["stock_price_history"][-1])
+        # NOTE: 다음 스텝으로 변경하기
+        # FIXME: 중간에 오류가 발생하면 다시 시도해달라고 해야됨.
         st.session_state["status"] = "STEP3"
 
+
+        # NOTE: 갱신된 가격 등록해서 DF에 추가하기
+        new_date: str = (
+                pd.to_datetime(START_SYSTEM_TIME) + pd.DateOffset(months=st.session_state["system_time"])
+        ).strftime('%Y-%m-%d')
+        set_data_frame_by_system_price(new_date, STOCK_NAMES, st.session_state["prices"])
+
+
     def step3_full_step_done(self, message_content: str):
-        if message_content == "계속 진행하겠습니다.":
+        if message_content == "다음 턴을 시작합니다.":
             with st.chat_message("ai"):
-                st.markdown("단계가 마무리 되었습니다. '계속 진행하겠습니다.'를 입력해주세요.")
+                st.markdown("단계가 마무리 되었습니다. '다음 턴을 시작합니다.'를 입력해주세요.")
             return
         else:
             with st.chat_message("ai"):
