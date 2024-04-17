@@ -1,5 +1,6 @@
 import time
 from typing import Optional, List
+import webbrowser as wb
 
 import pandas as pd
 
@@ -247,6 +248,8 @@ class StreamlitChatService:
                     if st.button('다음 투자 라운드를 진행합니다.'):
                         button_flag = True
                 if button_flag:
+                    wb.open_new_tab(
+                        f"https://pages.coupang.com/f/s14445?from=home_C2&traid=home_C2&trcid=11370359")
                     self.step3_full_step_done()
 
 

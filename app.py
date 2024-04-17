@@ -38,11 +38,9 @@ def streamlit_init():
         st.session_state["market"] = []  # 시장
         st.session_state["stocks"] = []  # 시장
         st.session_state["actions"] = []  # 유저 액션
-        st.session_state["system_time"] = 59  # 시간 -> 개월수로 처리
+        st.session_state["system_time"] = 0  # 시간 -> 개월수로 처리
         st.session_state["system_time_end"] = 60  # 시간 -> 개월수로 처리
         st.session_state["user_input_time"] = ""  # 유저 입력 시간
-        st.session_state["stock_info"] = 0  # 유저 포트폴리오 정보
-        st.session_state["stock_info_df"] = 0  # 유저 포트폴리오 정보
         st.session_state["status"] = "STEP1"
         st.session_state["portfolio_ratio_list"] = [0, 0, 0, 0, 0, 0]  # 초기 유저 포트폴리오
         st.session_state["user_cash"] = 50000000
