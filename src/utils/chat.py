@@ -72,9 +72,9 @@ class OpenAIChatMessageCallbackHandler(BaseCallbackHandler):
     def on_llm_end(self, *args, **kwargs):
         append_ai_message(self.message)
 
-        if st.session_state["status"] == "STEP2":
-            with st.spinner('주식 가격을 변경중입니다...'):
-                time.sleep(5)
+        # if st.session_state["status"] == "STEP2":
+        #     with st.spinner('주식 가격을 변경중입니다...'):
+        #         time.sleep(5)
 
         if st.button('확인'):
             st.write("다음 단계로 넘어갑니다.")
@@ -174,6 +174,7 @@ class StreamlitChatService:
 
         portfolio_dict_data = get_portfolio_df_data()
         # NOTE: 포트폴리오 확인
+        print("포트폴리오 내용:", portfolio_dict_data)
         if sum(st.session_state["portfolio_df_data"]) != 100:
             with st.chat_message("ai"):
                 st.markdown("각각의 포트폴리오 비율의 합은 100이 되어야 합니다.")
@@ -183,32 +184,29 @@ class StreamlitChatService:
         stock_prices_for_prompt = list(zip(STOCK_NAMES, st.session_state["portfolio_df_data"]))
         with st.chat_message("ai"):
             st.markdown(f'선택하신 스킵 시간은 {st.session_state["user_input_time"]}, 포트폴리오는 {stock_prices_for_prompt}입니다.')
+        st.session_state["system_time"] = get_now_time_by_user_input_time(st.session_state["system_time"],
+                                                                          st.session_state["user_input_time"])
 
-        # NOTE: 새로운 Plot 가져오기
-        new_plot = biz_logic.update_story(
-            time=st.session_state["user_input_time"],
-            background=st.session_state["background_history"][-1],
-            callbacks=[OpenAIChatMessageCallbackHandler()],
-        )
-        st.session_state["plot_history"].append(new_plot)
-        self.write_logs(f"STEP2-1 [AI MODEL]: plot 갱신. new_plot:", ai_response=st.session_state["plot_history"][-1])
 
+        print(f"추가되는 search history: {st.session_state['stock_search_history']}")
         # NOTE: 새로운 Plot 기반으로 배경 설명 가져오기
         new_background = biz_logic.update_background(
-            background=st.session_state["background_history"][-1], new_plot=st.session_state["plot_history"][-1]
+            background=st.session_state["background_history"][-1],
+            system_time=st.session_state["system_time"],
+            search_result=st.session_state["stock_search_history"][-1],
+            callbacks=[OpenAIChatMessageCallbackHandler()]
         )
         st.session_state["background_history"].append(new_background)
-        self.write_logs(f"STEP2-2 [AI MODEL]: background 갱신. new_background:",
+        self.write_logs(f"STEP2-1 [AI MODEL]: background 갱신. new_background:",
                         ai_response=st.session_state["background_history"][-1])
 
         # NOTE: 시간 조정하기 (유저가 스킵하고자하는 시간 설정)
-        st.session_state["system_time"] = get_now_time_by_user_input_time(st.session_state["system_time"],
-                                                                          st.session_state["user_input_time"])
+
         # NOTE: 변경된 배경 상황에 따라 주식 가격 업데이트 하기
         new_stock_price = calculate_new_price(st.session_state["system_time"], st.session_state["prices"])
         st.session_state["prices"] = new_stock_price
         st.session_state["stock_price_history"].append(new_stock_price)
-        self.write_logs(f"STEP2-3 [AI MODEL]: 가격 갱신. new_stock_price:",
+        self.write_logs(f"STEP2-2 [AI MODEL]: 가격 갱신. new_stock_price:",
                         ai_response=st.session_state["stock_price_history"][-1])
         # NOTE: 다음 스텝으로 변경하기
         # FIXME: 중간에 오류가 발생하면 다시 시도해달라고 해야됨.

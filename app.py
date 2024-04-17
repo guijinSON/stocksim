@@ -28,9 +28,6 @@ def streamlit_init():
             "background_history"
         ] = [get_game_initial_background(), ]
         st.session_state[
-            "plot_history"
-        ] = []
-        st.session_state[
             "stock_price_history"
         ] = []
         st.session_state["stock_search_history"] = []  # 초기 유저 포트폴리오
@@ -121,9 +118,6 @@ def streamlit_init():
         with st.container(height=500):
             st.subheader("대화 히스토리")
             for message in st.session_state["messages"]:
-                print("MESSAGE:", message)
-                # if not message['content']:
-                #     break
                 with st.chat_message(message["role"]):
                     st.markdown(message["content"])
 
