@@ -85,7 +85,7 @@ class OpenAIChatMessageCallbackHandler(BaseCallbackHandler):
 
     def on_llm_new_token(self, token, *args, **kwargs):
         self.message += token
-        self.message_box.markdown(self.message)
+        self.message_box.write(self.message)
 
 
 class StreamlitChatService:
@@ -134,9 +134,9 @@ class StreamlitChatService:
         #         )
         #     st.session_state["status"] = "STEP1"
         with st.chat_message("ai"):
-            st.markdown("AI 모델 답변이 제공되고 있습니다. 제공되는 글을 천천히 읽어주세요.📑")
+            st.markdown("답변이 제공되고 있습니다. 제공되는 글을 천천히 읽어주세요.📑")
             append_ai_message(
-                "AI 모델 답변이 제공되고 있습니다. 제공되는 글을 천천히 읽어주세요.📑"
+                "답변이 제공되고 있습니다. 제공되는 글을 천천히 읽어주세요.📑"
             )
         response = biz_logic.search_stock(
             inputs=message_content,

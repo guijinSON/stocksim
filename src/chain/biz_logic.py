@@ -55,7 +55,7 @@ def summary_background(
     prompt = ChatPromptTemplate.from_template(
         "Please summarize this Background in one paragraph write in korean.\n ### Background: {background}\n### Summarized Background:"
     )
-    llm = get_azure_gpt_chat_llm(model_version=MODEL_VERSION, is_stream=True)
+    llm = get_azure_gpt_chat_llm(model_version='35', is_stream=True)
 
     chain = (
             prompt | llm
